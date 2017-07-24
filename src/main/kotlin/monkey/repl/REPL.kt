@@ -1,7 +1,7 @@
 package monkey.repl
 
 import com.andreapivetta.kolor.blue
-import monkey.lexer.Lexer
+import monkey.lexer.StringLexer
 import monkey.token.TokenType
 
 
@@ -15,7 +15,7 @@ object REPL {
     fun start() {
         while (true) {
             print(PROMPT)
-            val lexer = Lexer(readLine()!!)
+            val lexer = StringLexer(readLine()!!)
             var token = lexer.nextToken()
             while (token.tokenType !== TokenType.EOF) {
                 println(token)

@@ -1,5 +1,14 @@
 package monkey.token
 
+val KEYWORDS = mapOf(
+        "let" to TokenType.LET,
+        "fn" to TokenType.FUNCTION,
+        "true" to TokenType.TRUE,
+        "false" to TokenType.FALSE,
+        "if" to TokenType.IF,
+        "else" to TokenType.ELSE,
+        "return" to TokenType.RETURN)
+
 /**
  * The type of a Token
  * @author andrea

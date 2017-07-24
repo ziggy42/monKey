@@ -15,7 +15,7 @@ object LexerTest : Spek({
     describe("lexer") {
         it("extract basic tokens") {
             val simpleTokens = "=+(){},;"
-            val lexer = Lexer(simpleTokens)
+            val lexer = StringLexer(simpleTokens)
 
             arrayOf(
                     Token(TokenType.ASSIGN, "="),
@@ -36,7 +36,7 @@ object LexerTest : Spek({
 ==
 !=
 """
-            val lexer = Lexer(mathExpression)
+            val lexer = StringLexer(mathExpression)
 
             arrayOf(
                     Token(TokenType.INT, "5"),
@@ -69,7 +69,7 @@ let add = fn(x, y) {
 
 let result = add(five, ten);
 """
-            val lexer = Lexer(codeSnippet)
+            val lexer = StringLexer(codeSnippet)
 
             arrayOf(
                     Token(TokenType.LET, "let"),
@@ -119,7 +119,7 @@ if (5 < 10) {
     return false;
 }
 """
-            val lexer = Lexer(codeSnippet)
+            val lexer = StringLexer(codeSnippet)
 
             arrayOf(
                     Token(TokenType.IF, "if"),
