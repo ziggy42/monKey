@@ -1,8 +1,9 @@
 package monkey.repl
 
 import com.andreapivetta.kolor.blue
+import com.andreapivetta.kolor.red
+import monkey.ast.Parser
 import monkey.lexer.StringLexer
-import monkey.token.TokenType
 
 
 /**
@@ -11,15 +12,28 @@ import monkey.token.TokenType
  */
 object REPL {
     private val PROMPT = ">> ".blue()
+    private val MONKEY_FACE = """          __,__
+   .--.  .-"     "-.  .--.
+  / .. \/  .-. .-.  \/ .. \
+ | |  '|  /   Y   \  |'  | |
+ | \   \  \ 0 | 0 /  /   / |
+  \ '- ,\.-'''''''-./, -' /
+   ''-' /_   ^ ^   _\ '-''
+       |  \._   _./  |
+       \   \ '~' /   /
+        '._ '-=-' _.'
+           '-----'
+	""".red()
 
     fun start() {
         while (true) {
             print(PROMPT)
-            val lexer = StringLexer(readLine()!!)
-            var token = lexer.nextToken()
-            while (token.tokenType !== TokenType.EOF) {
-                println(token)
-                token = lexer.nextToken()
+            try {
+                val parser = Parser(StringLexer(readLine()!!))
+                println(parser.parseProgram())
+            } catch (error: Exception) {
+                println(MONKEY_FACE)
+                println(error.message?.red())
             }
         }
     }
