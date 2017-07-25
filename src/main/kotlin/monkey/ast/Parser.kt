@@ -79,7 +79,17 @@ class Parser(private val lexer: Lexer) {
             throw RuntimeException("Expected {")
 
         val consequence = parseBlockStatement()
-        IfExpression(ifToken, condition, consequence)
+
+        if (peekToken.tokenType == TokenType.ELSE) {
+            nextToken()
+
+            if (!expectPeek(TokenType.LBRACE))
+                throw RuntimeException("Expected {")
+
+            IfExpression(ifToken, condition, consequence, parseBlockStatement())
+        } else {
+            IfExpression(ifToken, condition, consequence)
+        }
     }
 
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(

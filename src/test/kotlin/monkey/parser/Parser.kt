@@ -150,6 +150,40 @@ let foobar = 838383;
                     "<",
                     IdentifierExpression::class.java,
                     "y")
+
+            val expressionStatement = ifExpression.consequence.statements[0] as ExpressionStatement
+            testIdentifierExpression(expressionStatement.expression, "x")
+        }
+
+        it("Test if expression with else") {
+            val program = Parser(StringLexer("if (x < y) { x } else { y }")).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.not.be.`null`
+            expression.should.instanceof(IfExpression::class.java)
+
+            val ifExpression = expression as IfExpression
+            ifExpression.alternative.should.not.be.`null`
+
+            testInfixExpression(
+                    ifExpression.condition,
+                    IdentifierExpression::class.java,
+                    "x",
+                    "<",
+                    IdentifierExpression::class.java,
+                    "y")
+
+            val consequenceStatement = ifExpression.consequence.statements[0] as ExpressionStatement
+            testIdentifierExpression(consequenceStatement.expression, "x")
+
+            ifExpression.alternative.should.not.be.`null`
+            val alternativeExpression = ifExpression.alternative!!.statements[0] as ExpressionStatement
+            testIdentifierExpression(alternativeExpression.expression, "y")
         }
 
         it("Throw exceptions if code has unexpected tokens") {
