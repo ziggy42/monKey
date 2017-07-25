@@ -23,8 +23,8 @@ object ParserTest : Spek({
         it("Parse let statements") {
             val code = """
 let x = 5;
-let y = 10;
-let foobar = 838383;
+let y = true;
+let foobar = y;
 """
             val program = Parser(StringLexer(code)).parseProgram()
 
@@ -36,7 +36,7 @@ let foobar = 838383;
         }
 
         it("Parse return statements") {
-            val program = Parser(StringLexer("return 5; return 10; return 1234;")).parseProgram()
+            val program = Parser(StringLexer("return 5; return true; return 1234;")).parseProgram()
 
             testProgram(program, 3)
 

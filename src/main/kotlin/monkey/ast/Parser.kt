@@ -191,13 +191,14 @@ class Parser(private val lexer: Lexer) {
         if (!expectPeek(TokenType.ASSIGN))
             throw UnexpectedTokenException(TokenType.ASSIGN, peekToken.tokenType)
 
-        // TODO We're jumping to the end of the statement but ofc we need to parse the expression!
-        while (currentToken.tokenType !== TokenType.SEMICOLON)
+        nextToken()
+
+        val value = parseExpression(Precedence.LOWEST)
+
+        if (peekToken.tokenType == TokenType.SEMICOLON)
             nextToken()
 
-        // TODO the third argument is WRONG, it's here just to be able to compile
-        // we need to parse the expression!
-        return LetStatement(letToken, name, name)
+        return LetStatement(letToken, name, value)
     }
 
     private fun parseReturnStatement(): ReturnStatement {
@@ -205,12 +206,12 @@ class Parser(private val lexer: Lexer) {
 
         nextToken()
 
-        // TODO We're jumping to the end of the statement but ofc we need to parse the expression!
-        while (currentToken.tokenType !== TokenType.SEMICOLON)
+        val returnValue = parseExpression(Precedence.LOWEST)
+
+        if (peekToken.tokenType == TokenType.SEMICOLON)
             nextToken()
 
-        // TODO totally random second argument
-        return ReturnStatement(returnToken, IdentifierExpression(currentToken, currentToken.literal))
+        return ReturnStatement(returnToken, returnValue)
     }
 
     private fun parseBlockStatement(): BlockStatement {
