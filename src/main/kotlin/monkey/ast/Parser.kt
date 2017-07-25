@@ -18,7 +18,8 @@ val PREFERENCES_MAP = mapOf(
         TokenType.PLUS to Precedence.SUM,
         TokenType.MINUS to Precedence.SUM,
         TokenType.SLASH to Precedence.PRODUCT,
-        TokenType.ASTERISK to Precedence.PRODUCT)
+        TokenType.ASTERISK to Precedence.PRODUCT,
+        TokenType.LPAREN to Precedence.CALL)
 
 /**
  * @author andrea
@@ -108,6 +109,10 @@ class Parser(private val lexer: Lexer) {
         FunctionLiteralExpression(fnToken, parameters, body)
     }
 
+    private val parseCallExpression: InfixParseFunction = {
+        CallExpression(currentToken, it, parseCallArguments())
+    }
+
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(
             TokenType.IDENT to { IdentifierExpression(this.currentToken, this.currentToken.literal) },
             TokenType.INT to { IntegerLiteralExpression(this.currentToken, this.currentToken.literal.toInt()) },
@@ -126,7 +131,8 @@ class Parser(private val lexer: Lexer) {
             TokenType.PLUS to parseInfixExpression,
             TokenType.MINUS to parseInfixExpression,
             TokenType.SLASH to parseInfixExpression,
-            TokenType.ASTERISK to parseInfixExpression)
+            TokenType.ASTERISK to parseInfixExpression,
+            TokenType.LPAREN to parseCallExpression)
 
     private var currentToken: Token = this.lexer.nextToken()
     private var peekToken: Token = this.lexer.nextToken()
@@ -242,6 +248,30 @@ class Parser(private val lexer: Lexer) {
             throw RuntimeException("Expected )")
 
         return identifiers
+    }
+
+    private fun parseCallArguments(): List<Expression> {
+        if (peekToken.tokenType == TokenType.RPAREN) {
+            nextToken()
+            return emptyList()
+        }
+
+        val arguments = mutableListOf<Expression>()
+
+        nextToken()
+
+        arguments.add(parseExpression(Precedence.LOWEST))
+
+        while (peekToken.tokenType == TokenType.COMMA) {
+            nextToken()
+            nextToken()
+            arguments.add(parseExpression(Precedence.LOWEST))
+        }
+
+        if (!expectPeek(TokenType.RPAREN))
+            throw RuntimeException("Expected )")
+
+        return arguments
     }
 
     private fun peekPrecedence() = PREFERENCES_MAP[peekToken.tokenType] ?: Precedence.LOWEST

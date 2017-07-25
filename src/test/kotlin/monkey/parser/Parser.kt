@@ -212,6 +212,39 @@ let foobar = 838383;
                     "y")
         }
 
+        it("Test call expression") {
+            val program = Parser(StringLexer("add(1, 2 * 3, 4 + 5);")).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(CallExpression::class.java)
+
+            val callExpression = expression as CallExpression
+            testIdentifierExpression(callExpression.function, "add")
+
+            callExpression.arguments.size.should.be.equal(3)
+
+            testIntegerLiteralExpression(callExpression.arguments[0], 1)
+            testInfixExpression(
+                    callExpression.arguments[1],
+                    IntegerLiteralExpression::class.java,
+                    2,
+                    "*",
+                    IntegerLiteralExpression::class.java,
+                    3)
+            testInfixExpression(
+                    callExpression.arguments[2],
+                    IntegerLiteralExpression::class.java,
+                    4,
+                    "+",
+                    IntegerLiteralExpression::class.java,
+                    5)
+        }
+
         it("Throw exceptions if code has unexpected tokens") {
             val parser = Parser(StringLexer("let = 4;"))
             try {
