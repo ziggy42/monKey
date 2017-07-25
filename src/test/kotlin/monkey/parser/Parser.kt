@@ -137,7 +137,6 @@ let foobar = 838383;
             statement.should.instanceof(ExpressionStatement::class.java)
 
             val expression = (statement as ExpressionStatement).expression
-            expression.should.not.be.`null`
             expression.should.instanceof(IfExpression::class.java)
 
             val ifExpression = expression as IfExpression
@@ -164,11 +163,9 @@ let foobar = 838383;
             statement.should.instanceof(ExpressionStatement::class.java)
 
             val expression = (statement as ExpressionStatement).expression
-            expression.should.not.be.`null`
             expression.should.instanceof(IfExpression::class.java)
 
             val ifExpression = expression as IfExpression
-            ifExpression.alternative.should.not.be.`null`
 
             testInfixExpression(
                     ifExpression.condition,
@@ -184,6 +181,35 @@ let foobar = 838383;
             ifExpression.alternative.should.not.be.`null`
             val alternativeExpression = ifExpression.alternative!!.statements[0] as ExpressionStatement
             testIdentifierExpression(alternativeExpression.expression, "y")
+        }
+
+        it("Test function literal expressions") {
+            val program = Parser(StringLexer("fn(x, y) { x + y; }")).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(FunctionLiteralExpression::class.java)
+
+            val functionLiteralExpression = expression as FunctionLiteralExpression
+            functionLiteralExpression.parameters.size.should.be.equal(2)
+
+            testIdentifierExpression(functionLiteralExpression.parameters[0], "x")
+            testIdentifierExpression(functionLiteralExpression.parameters[1], "y")
+
+            functionLiteralExpression.body.statements.size.should.be.equal(1)
+            functionLiteralExpression.body.statements[0].should.be.instanceof(ExpressionStatement::class.java)
+
+            val expressionStatement = functionLiteralExpression.body.statements[0] as ExpressionStatement
+            testInfixExpression(
+                    expressionStatement.expression,
+                    IdentifierExpression::class.java,
+                    "x", "+",
+                    IdentifierExpression::class.java,
+                    "y")
         }
 
         it("Throw exceptions if code has unexpected tokens") {

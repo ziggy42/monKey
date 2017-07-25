@@ -92,6 +92,22 @@ class Parser(private val lexer: Lexer) {
         }
     }
 
+    private val parseFunctionLiteralExpression: PrefixParseFunction = {
+        val fnToken = currentToken
+
+        if (!expectPeek(TokenType.LPAREN))
+            throw RuntimeException("Expected (")
+
+        val parameters = this.parseFunctionParameters()
+
+        if (!expectPeek(TokenType.LBRACE))
+            throw RuntimeException("Expected {")
+
+        val body = parseBlockStatement()
+
+        FunctionLiteralExpression(fnToken, parameters, body)
+    }
+
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(
             TokenType.IDENT to { IdentifierExpression(this.currentToken, this.currentToken.literal) },
             TokenType.INT to { IntegerLiteralExpression(this.currentToken, this.currentToken.literal.toInt()) },
@@ -100,7 +116,8 @@ class Parser(private val lexer: Lexer) {
             TokenType.LPAREN to parseGroupedExpression,
             TokenType.TRUE to parseBooleanExpression,
             TokenType.FALSE to parseBooleanExpression,
-            TokenType.IF to parseIfExpression)
+            TokenType.IF to parseIfExpression,
+            TokenType.FUNCTION to parseFunctionLiteralExpression)
     private val INFIX_PARSE_FUNCTIONS: Map<TokenType, InfixParseFunction> = mapOf(
             TokenType.EQ to parseInfixExpression,
             TokenType.NOT_EQ to parseInfixExpression,
@@ -202,6 +219,29 @@ class Parser(private val lexer: Lexer) {
         }
 
         return BlockStatement(blockToken, statements)
+    }
+
+    private fun parseFunctionParameters(): List<IdentifierExpression> {
+        nextToken()
+
+        if (currentToken.tokenType == TokenType.RPAREN)
+            return emptyList()
+
+        val identifiers = mutableListOf<IdentifierExpression>()
+
+        identifiers.add(IdentifierExpression(currentToken, currentToken.literal))
+
+        while (peekToken.tokenType === TokenType.COMMA) {
+            nextToken()
+            nextToken()
+
+            identifiers.add(IdentifierExpression(currentToken, currentToken.literal))
+        }
+
+        if (!expectPeek(TokenType.RPAREN))
+            throw RuntimeException("Expected )")
+
+        return identifiers
     }
 
     private fun peekPrecedence() = PREFERENCES_MAP[peekToken.tokenType] ?: Precedence.LOWEST
