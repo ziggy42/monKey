@@ -1,5 +1,6 @@
 package monkey.ast
 
+import monkey.ast.exceptions.InvalidTokenException
 import monkey.ast.exceptions.UnexpectedTokenException
 import monkey.ast.expressions.*
 import monkey.ast.statements.*
@@ -55,7 +56,7 @@ class Parser(private val lexer: Lexer) {
 
         val expression = parseExpression(Precedence.LOWEST)
         if (!expectPeek(TokenType.RPAREN))
-            throw RuntimeException("Expected (")
+            throw UnexpectedTokenException(TokenType.LPAREN, peekToken.tokenType)
 
         expression
     }
@@ -68,16 +69,16 @@ class Parser(private val lexer: Lexer) {
         val ifToken = currentToken
 
         if (!expectPeek(TokenType.LPAREN))
-            throw RuntimeException("Expected (")
+            throw UnexpectedTokenException(TokenType.LPAREN, peekToken.tokenType)
 
         nextToken()
         val condition = parseExpression(Precedence.LOWEST)
 
         if (!expectPeek(TokenType.RPAREN))
-            throw RuntimeException("Expected )")
+            throw UnexpectedTokenException(TokenType.RPAREN, peekToken.tokenType)
 
         if (!expectPeek(TokenType.LBRACE))
-            throw RuntimeException("Expected {")
+            throw UnexpectedTokenException(TokenType.RBRACE, peekToken.tokenType)
 
         val consequence = parseBlockStatement()
 
@@ -85,7 +86,7 @@ class Parser(private val lexer: Lexer) {
             nextToken()
 
             if (!expectPeek(TokenType.LBRACE))
-                throw RuntimeException("Expected {")
+                throw UnexpectedTokenException(TokenType.RBRACE, peekToken.tokenType)
 
             IfExpression(ifToken, condition, consequence, parseBlockStatement())
         } else {
@@ -97,12 +98,12 @@ class Parser(private val lexer: Lexer) {
         val fnToken = currentToken
 
         if (!expectPeek(TokenType.LPAREN))
-            throw RuntimeException("Expected (")
+            throw UnexpectedTokenException(TokenType.LPAREN, peekToken.tokenType)
 
         val parameters = this.parseFunctionParameters()
 
         if (!expectPeek(TokenType.LBRACE))
-            throw RuntimeException("Expected {")
+            throw UnexpectedTokenException(TokenType.LBRACE, peekToken.tokenType)
 
         val body = parseBlockStatement()
 
@@ -165,7 +166,7 @@ class Parser(private val lexer: Lexer) {
 
     private fun parseExpression(precedence: Precedence): Expression {
         val parsePrefixExpression = PREFIX_PARSE_FUNCTIONS[currentToken.tokenType] ?:
-                throw RuntimeException("${currentToken.tokenType} Insert useful message")
+                throw InvalidTokenException(currentToken)
 
         var leftExpression = parsePrefixExpression()
 
@@ -246,7 +247,7 @@ class Parser(private val lexer: Lexer) {
         }
 
         if (!expectPeek(TokenType.RPAREN))
-            throw RuntimeException("Expected )")
+            throw UnexpectedTokenException(TokenType.RPAREN, peekToken.tokenType)
 
         return identifiers
     }

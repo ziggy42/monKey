@@ -12,7 +12,8 @@ import monkey.lexer.StringLexer
  */
 object REPL {
     private val PROMPT = ">> ".blue()
-    private val MONKEY_FACE = """          __,__
+    private val MONKEY_FACE = """
+            __,__
    .--.  .-"     "-.  .--.
   / .. \/  .-. .-.  \/ .. \
  | |  '|  /   Y   \  |'  | |
