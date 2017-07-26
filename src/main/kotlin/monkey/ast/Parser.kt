@@ -271,7 +271,7 @@ class Parser(private val lexer: Lexer) {
         }
 
         if (!expectPeek(TokenType.RPAREN))
-            throw RuntimeException("Expected )")
+            throw UnexpectedTokenException(TokenType.RPAREN, peekToken.tokenType)
 
         return arguments
     }
