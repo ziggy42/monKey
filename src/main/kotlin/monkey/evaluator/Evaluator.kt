@@ -57,8 +57,8 @@ object Evaluator {
     }
 
     private fun evalInfixBooleanExpression(operator: String, left: Boolean, right: Boolean) = when (operator) {
-        "==" -> nativeBoolToBooleanObject(left.value == right.value)
-        "!=" -> nativeBoolToBooleanObject(left.value != right.value)
+        "==" -> nativeBoolToBooleanObject(left === right)
+        "!=" -> nativeBoolToBooleanObject(left !== right)
         else -> throw RuntimeException("Unsupported operator $operator between booleans")
     }
 
