@@ -1,12 +1,11 @@
 package monkey.evaluator
 
+import monkey.`object`.*
 import monkey.`object`.Boolean
-import monkey.`object`.Integer
-import monkey.`object`.Null
-import monkey.`object`.Object
 import monkey.ast.Node
 import monkey.ast.Program
 import monkey.ast.expressions.BooleanExpression
+import monkey.ast.expressions.InfixExpression
 import monkey.ast.expressions.IntegerLiteralExpression
 import monkey.ast.expressions.PrefixExpression
 import monkey.ast.statements.ExpressionStatement
@@ -28,8 +27,14 @@ object Evaluator {
         BooleanExpression::class -> if ((node as BooleanExpression).value) TRUE else FALSE
         PrefixExpression::class -> {
             val prefixExpression = node as PrefixExpression
-            val right = eval(node.right)
+            val right = eval(prefixExpression.right)
             evalPrefixExpression(prefixExpression.operator, right)
+        }
+        InfixExpression::class -> {
+            val infixExpression = node as InfixExpression
+            val left = eval(infixExpression.left)
+            val right = eval(infixExpression.right)
+            evalInfixExpression(infixExpression.operator, left, right)
         }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
@@ -39,6 +44,21 @@ object Evaluator {
         // TODO why
         statements.forEach { result = eval(it) }
         return result
+    }
+
+    private fun evalInfixExpression(operator: String, left: Object, right: Object): Object {
+        if (left.type == ObjectType.INTEGER && right.type == ObjectType.INTEGER)
+            return evalInfixIntegerExpression(operator, left as Integer, right as Integer)
+
+        throw RuntimeException("Unsupported operator '$operator' between $left and $right")
+    }
+
+    private fun evalInfixIntegerExpression(operator: String, left: Integer, right: Integer) = when (operator) {
+        "+" -> Integer(left.value + right.value)
+        "-" -> Integer(left.value - right.value)
+        "*" -> Integer(left.value * right.value)
+        "/" -> Integer(left.value / right.value)
+        else -> throw RuntimeException("Unsupported operator $operator")
     }
 
     private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {

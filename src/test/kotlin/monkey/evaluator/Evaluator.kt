@@ -19,7 +19,18 @@ object EvaluatorTest : Spek({
             mapOf("5" to 5,
                     "10" to 10,
                     "-5" to -5,
-                    "-10" to -10)
+                    "-10" to -10,
+                    "5 + 5 + 5 + 5 - 10" to 10,
+                    "2 * 2 * 2 * 2 * 2" to 32,
+                    "-50 + 100 + -50" to 0,
+                    "5 * 2 + 10" to 20,
+                    "5 + 2 * 10" to 25,
+                    "20 + 2 * -10" to 0,
+                    "50 / 2 * 2 + 10" to 60,
+                    "2 * (5 + 10)" to 30,
+                    "3 * 3 * 3 + 10" to 37,
+                    "3 * (3 * 3) + 10" to 37,
+                    "(5 + 10 * 2 + 15 / 3) * 2 + -10" to 50)
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
 
