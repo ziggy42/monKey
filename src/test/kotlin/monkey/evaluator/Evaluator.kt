@@ -84,6 +84,15 @@ object EvaluatorTest : Spek({
                             testIntegerObject(evaluated, it.value as Int)
                     }
         }
+
+        it("Test return statements") {
+            mapOf("return 10;" to 10,
+                    "return 10; 9;" to 10,
+                    "return 2 * 5; 9;" to 10,
+                    "9; return 2 * 5; 9;" to 10,
+                    "if (10 > 1) { if (10 > 1) { return 10; } return 1; }" to 10)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
+        }
     }
 })
 

@@ -7,6 +7,7 @@ import monkey.ast.Program
 import monkey.ast.expressions.*
 import monkey.ast.statements.BlockStatement
 import monkey.ast.statements.ExpressionStatement
+import monkey.ast.statements.ReturnStatement
 import monkey.ast.statements.Statement
 
 /**
@@ -19,7 +20,7 @@ object Evaluator {
     private val NULL = Null()
 
     fun eval(node: Node): Object = when (node::class) {
-        Program::class -> evalStatements((node as Program).statements)
+        Program::class -> evalProgram((node as Program))
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
         BooleanExpression::class -> nativeBoolToBooleanObject((node as BooleanExpression).value)
@@ -36,7 +37,22 @@ object Evaluator {
         }
         BlockStatement::class -> evalStatements((node as BlockStatement).statements)
         IfExpression::class -> evalIfExpression(node as IfExpression)
+        ReturnStatement::class -> {
+            val returnValue = eval((node as ReturnStatement).returnValue)
+            ReturnValue(returnValue)
+        }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
+    }
+
+    private fun evalProgram(program: Program): Object {
+        var result: Object = NULL
+        program.statements.forEach {
+            result = eval(it)
+            if (result.type == ObjectType.RETURN_VALUE)
+                return (result as ReturnValue).value
+        }
+
+        return result
     }
 
     private fun evalIfExpression(expression: IfExpression): Object {
@@ -50,8 +66,12 @@ object Evaluator {
 
     private fun evalStatements(statements: List<Statement>): Object {
         var result: Object = NULL
-        // TODO why
-        statements.forEach { result = eval(it) }
+        statements.forEach {
+            result = eval(it)
+            if (result.type == ObjectType.RETURN_VALUE)
+                return result
+        }
+
         return result
     }
 

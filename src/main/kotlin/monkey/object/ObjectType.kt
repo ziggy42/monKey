@@ -5,5 +5,5 @@ package monkey.`object`
  * @since 7/29/17
  */
 enum class ObjectType {
-    INTEGER, BOOLEAN, NULL
+    INTEGER, BOOLEAN, NULL, RETURN_VALUE
 }
