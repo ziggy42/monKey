@@ -22,6 +22,16 @@ object EvaluatorTest : Spek({
         it("Test evaluation of boolean expressions") {
             mapOf("true" to true, "false" to false).forEach { testBooleanObject(testEval(it.key), it.value) }
         }
+
+        it("Test evaluation of the ! operator") {
+            mapOf("!true" to false,
+                    "!false" to true,
+                    "!5" to false,
+                    "!!true" to true,
+                    "!!false" to false,
+                    "!!5" to true)
+                    .forEach { testBooleanObject(testEval(it.key), it.value) }
+        }
     }
 })
 

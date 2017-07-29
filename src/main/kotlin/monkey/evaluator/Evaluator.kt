@@ -8,6 +8,7 @@ import monkey.ast.Node
 import monkey.ast.Program
 import monkey.ast.expressions.BooleanExpression
 import monkey.ast.expressions.IntegerLiteralExpression
+import monkey.ast.expressions.PrefixExpression
 import monkey.ast.statements.ExpressionStatement
 import monkey.ast.statements.Statement
 
@@ -25,6 +26,11 @@ object Evaluator {
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
         BooleanExpression::class -> if ((node as BooleanExpression).value) TRUE else FALSE
+        PrefixExpression::class -> {
+            val prefixExpression = node as PrefixExpression
+            val right = eval(node.right)
+            evalPrefixExpression(prefixExpression.operator, right)
+        }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
@@ -33,5 +39,17 @@ object Evaluator {
         // TODO why
         statements.forEach { result = eval(it) }
         return result
+    }
+
+    private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {
+        "!" -> evalBangOperatorExpression(right)
+        else -> throw RuntimeException("Unsupported operator $operator")
+    }
+
+    private fun evalBangOperatorExpression(right: Object) = when (right) {
+        TRUE -> FALSE
+        FALSE -> TRUE
+        NULL -> TRUE
+        else -> FALSE
     }
 }
