@@ -16,12 +16,14 @@ import monkey.ast.statements.Statement
  * @since 7/29/17
  */
 object Evaluator {
+    private val TRUE = Boolean(true)
+    private val FALSE = Boolean(false)
 
     fun eval(node: Node): Object = when (node::class) {
         Program::class -> evalStatements((node as Program).statements)
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
-        BooleanExpression::class -> Boolean((node as BooleanExpression).value)
+        BooleanExpression::class -> if ((node as BooleanExpression).value) TRUE else FALSE
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
