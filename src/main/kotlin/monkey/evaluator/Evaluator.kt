@@ -2,6 +2,7 @@ package monkey.evaluator
 
 import monkey.`object`.*
 import monkey.`object`.Boolean
+import monkey.`object`.Function
 import monkey.ast.Node
 import monkey.ast.Program
 import monkey.ast.expressions.*
@@ -61,8 +62,32 @@ object Evaluator {
             }
         }
         IdentifierExpression::class -> evalIdentifier(node as IdentifierExpression, environment)
+        FunctionLiteralExpression::class -> {
+            val parameters = (node as FunctionLiteralExpression).parameters
+            val body = node.body
+            Function(parameters, body, environment)
+        }
+        CallExpression::class -> run {
+            val function = eval((node as CallExpression).function, environment)
+            if (isError(function))
+                return function
+
+            val args = evalExpressions(node.arguments, environment)
+            if (args.size == 1 && isError(args[0]))
+                return args[0]
+
+            return applyFunction(function, args)
+        }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
+
+    private fun evalExpressions(arguments: List<Expression>, environment: Environment): List<Object> =
+            arguments.map {
+                val evaluated = eval(it, environment)
+                if (isError(evaluated))
+                    return listOf(evaluated)
+                evaluated
+            }
 
     private fun evalProgram(program: Program, environment: Environment): Object {
         var result: Object = NULL
@@ -149,6 +174,23 @@ object Evaluator {
         FALSE -> TRUE
         NULL -> TRUE
         else -> FALSE
+    }
+
+    private fun applyFunction(function: Object, args: List<Object>): Object {
+        if (function !is Function)
+            return Error("not a function: $function")
+
+        val env = extendFunctionEnv(function, args)
+        val evaluated = eval(function.body, env)
+        return unwrapReturnValue(evaluated)
+    }
+
+    private fun unwrapReturnValue(evaluated: Object): Object = (evaluated as? ReturnValue)?.value ?: evaluated
+
+    private fun extendFunctionEnv(function: Function, arguments: List<Object>): Environment {
+        val env = function.env.newEnclosedEnvironment()
+        function.parameters.forEachIndexed { index, param -> env.set(param.value, arguments[index]) }
+        return env
     }
 
     private fun nativeBoolToBooleanObject(boolean: kotlin.Boolean) = if (boolean) TRUE else FALSE

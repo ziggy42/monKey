@@ -1,10 +1,8 @@
 package monkey.evaluator
 
 import com.winterbe.expekt.should
-import monkey.`object`.Environment
-import monkey.`object`.Integer
-import monkey.`object`.Null
-import monkey.`object`.Object
+import monkey.`object`.*
+import monkey.`object`.Function
 import monkey.ast.Parser
 import monkey.lexer.StringLexer
 import org.jetbrains.spek.api.Spek
@@ -115,6 +113,17 @@ object EvaluatorTest : Spek({
                     "let a = 5; let b = a; let c = a + b + 5; c;" to 15)
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
+
+        it("Test function application") {
+            mapOf(
+                    "let identity = fn(x) { x; }; identity(5);" to 5,
+                    "let identity = fn(x) { return x; }; identity(5);" to 5,
+                    "let double = fn(x) { x * 2; }; double(5);" to 10,
+                    "let add = fn(x, y) { x + y; }; add(5, 5);" to 10,
+                    "let add = fn(x, y) { x + y; }; add(5 + 5, add(5, 5));" to 20,
+                    "fn(x) { x; }(5)" to 5)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
+        }
     }
 })
 
@@ -141,4 +150,16 @@ fun testNullObject(obj: Object) {
 fun testError(obj: Object, expected: String) {
     obj.should.be.instanceof(monkey.`object`.Error::class.java)
     (obj as monkey.`object`.Error).message.should.be.equal(expected)
+}
+
+fun testFunctionObject() {
+    val input = "fn(x) { x + 2; };"
+
+    val evaluated = testEval(input)
+    evaluated.should.instanceof(Function::class.java)
+    val function = evaluated as Function
+
+    function.parameters.size.should.equal(1)
+    function.parameters[0].toString().should.equal("x")
+    function.body.toString().should.equal("(x + 2)")
 }
