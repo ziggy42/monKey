@@ -50,7 +50,16 @@ object Evaluator {
         if (left.type == ObjectType.INTEGER && right.type == ObjectType.INTEGER)
             return evalInfixIntegerExpression(operator, left as Integer, right as Integer)
 
+        if (left.type == ObjectType.BOOLEAN && right.type == ObjectType.BOOLEAN)
+            return evalInfixBooleanExpression(operator, left as Boolean, right as Boolean)
+
         throw RuntimeException("Unsupported operator '$operator' between $left and $right")
+    }
+
+    private fun evalInfixBooleanExpression(operator: String, left: Boolean, right: Boolean) = when (operator) {
+        "==" -> nativeBoolToBooleanObject(left.value == right.value)
+        "!=" -> nativeBoolToBooleanObject(left.value != right.value)
+        else -> throw RuntimeException("Unsupported operator $operator between booleans")
     }
 
     private fun evalInfixIntegerExpression(operator: String, left: Integer, right: Integer) = when (operator) {
@@ -62,7 +71,7 @@ object Evaluator {
         "<" -> nativeBoolToBooleanObject(left.value < right.value)
         "==" -> nativeBoolToBooleanObject(left.value == right.value)
         "!=" -> nativeBoolToBooleanObject(left.value != right.value)
-        else -> throw RuntimeException("Unsupported operator $operator")
+        else -> throw RuntimeException("Unsupported operator $operator between integers")
     }
 
     private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {

@@ -44,7 +44,16 @@ object EvaluatorTest : Spek({
                     "1 == 1" to true,
                     "1 != 1" to false,
                     "1 == 2" to false,
-                    "1 != 2" to true)
+                    "1 != 2" to true,
+                    "true == true" to true,
+                    "false == false" to true,
+                    "true == false" to false,
+                    "true != false" to true,
+                    "false != true" to true,
+                    "(1 < 2) == true" to true,
+                    "(1 < 2) == false" to false,
+                    "(1 > 2) == true" to false,
+                    "(1 > 2) == false" to true)
                     .forEach { testBooleanObject(testEval(it.key), it.value) }
         }
 
