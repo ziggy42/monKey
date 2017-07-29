@@ -1,10 +1,12 @@
 package monkey.evaluator
 
+import monkey.`object`.Boolean
 import monkey.`object`.Integer
 import monkey.`object`.Null
 import monkey.`object`.Object
 import monkey.ast.Node
 import monkey.ast.Program
+import monkey.ast.expressions.BooleanExpression
 import monkey.ast.expressions.IntegerLiteralExpression
 import monkey.ast.statements.ExpressionStatement
 import monkey.ast.statements.Statement
@@ -19,6 +21,7 @@ object Evaluator {
         Program::class -> evalStatements((node as Program).statements)
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
+        BooleanExpression::class -> Boolean((node as BooleanExpression).value)
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
