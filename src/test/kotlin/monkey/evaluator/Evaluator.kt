@@ -1,6 +1,7 @@
 package monkey.evaluator
 
 import com.winterbe.expekt.should
+import monkey.`object`.Environment
 import monkey.`object`.Integer
 import monkey.`object`.Null
 import monkey.`object`.Object
@@ -102,15 +103,25 @@ object EvaluatorTest : Spek({
                     "5; true + false; 5" to "unknown operator: BOOLEAN + BOOLEAN",
                     "if (10 > 1) { true + false; }" to "unknown operator: BOOLEAN + BOOLEAN",
                     "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }" to
-                            "unknown operator: BOOLEAN + BOOLEAN")
+                            "unknown operator: BOOLEAN + BOOLEAN",
+                    "foobar" to "identifier not found: foobar")
                     .forEach { testError(testEval(it.key), it.value) }
+        }
+
+        it("Test let statements") {
+            mapOf("let a = 5; a;" to 5,
+                    "let a = 5 * 5; a;" to 25,
+                    "let a = 5; let b = a; b;" to 5,
+                    "let a = 5; let b = a; let c = a + b + 5; c;" to 15)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
     }
 })
 
 fun testEval(input: String): Object {
+    val environment = Environment()
     val program = Parser(StringLexer(input)).parseProgram()
-    return Evaluator.eval(program)
+    return Evaluator.eval(program, environment)
 }
 
 fun testIntegerObject(obj: Object, expected: Int) {

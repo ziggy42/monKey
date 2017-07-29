@@ -2,6 +2,7 @@ package monkey.repl
 
 import com.andreapivetta.kolor.blue
 import com.andreapivetta.kolor.red
+import monkey.`object`.Environment
 import monkey.ast.Parser
 import monkey.evaluator.Evaluator
 import monkey.lexer.StringLexer
@@ -28,12 +29,13 @@ object REPL {
 	""".red()
 
     fun start() {
+        val environment = Environment()
         while (true) {
             print(PROMPT)
             try {
                 val parser = Parser(StringLexer(readLine()!!))
                 val program = parser.parseProgram()
-                println(Evaluator.eval(program).inspect())
+                println(Evaluator.eval(program, environment).inspect())
             } catch (error: Exception) {
                 println(MONKEY_FACE)
                 println(error.message?.red())

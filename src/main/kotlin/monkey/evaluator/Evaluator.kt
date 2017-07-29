@@ -5,10 +5,7 @@ import monkey.`object`.Boolean
 import monkey.ast.Node
 import monkey.ast.Program
 import monkey.ast.expressions.*
-import monkey.ast.statements.BlockStatement
-import monkey.ast.statements.ExpressionStatement
-import monkey.ast.statements.ReturnStatement
-import monkey.ast.statements.Statement
+import monkey.ast.statements.*
 
 /**
  * @author andrea
@@ -19,14 +16,14 @@ object Evaluator {
     private val FALSE = Boolean(false)
     private val NULL = Null()
 
-    fun eval(node: Node): Object = when (node::class) {
-        Program::class -> evalProgram((node as Program))
-        ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
+    fun eval(node: Node, environment: Environment): Object = when (node::class) {
+        Program::class -> evalProgram((node as Program), environment)
+        ExpressionStatement::class -> eval((node as ExpressionStatement).expression, environment)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
         BooleanExpression::class -> nativeBoolToBooleanObject((node as BooleanExpression).value)
         PrefixExpression::class -> {
             val prefixExpression = node as PrefixExpression
-            val right = eval(prefixExpression.right)
+            val right = eval(prefixExpression.right, environment)
             if (isError(right))
                 right
             else
@@ -34,33 +31,43 @@ object Evaluator {
         }
         InfixExpression::class -> {
             val infixExpression = node as InfixExpression
-            val left = eval(infixExpression.left)
+            val left = eval(infixExpression.left, environment)
             if (isError(left))
                 left
             else {
-                val right = eval(infixExpression.right)
+                val right = eval(infixExpression.right, environment)
                 if (isError(right))
                     right
                 else
                     evalInfixExpression(infixExpression.operator, left, right)
             }
         }
-        BlockStatement::class -> evalStatements((node as BlockStatement).statements)
-        IfExpression::class -> evalIfExpression(node as IfExpression)
+        BlockStatement::class -> evalStatements((node as BlockStatement).statements, environment)
+        IfExpression::class -> evalIfExpression(node as IfExpression, environment)
         ReturnStatement::class -> {
-            val returnValue = eval((node as ReturnStatement).returnValue)
+            val returnValue = eval((node as ReturnStatement).returnValue, environment)
             if (isError(returnValue))
                 returnValue
             else
                 ReturnValue(returnValue)
         }
+        LetStatement::class -> {
+            val letStatement = node as LetStatement
+            val value = eval(letStatement.value, environment)
+            if (isError(value))
+                value
+            else {
+                environment.set(letStatement.name.value, value)
+            }
+        }
+        IdentifierExpression::class -> evalIdentifier(node as IdentifierExpression, environment)
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
-    private fun evalProgram(program: Program): Object {
+    private fun evalProgram(program: Program, environment: Environment): Object {
         var result: Object = NULL
         program.statements.forEach {
-            result = eval(it)
+            result = eval(it, environment)
 
             @Suppress("NON_EXHAUSTIVE_WHEN")
             when (result.type) {
@@ -72,28 +79,31 @@ object Evaluator {
         return result
     }
 
-    private fun evalIfExpression(expression: IfExpression): Object {
-        val condition = eval(expression.condition)
+    private fun evalIfExpression(expression: IfExpression, environment: Environment): Object {
+        val condition = eval(expression.condition, environment)
         if (isError(condition))
             return condition
 
         if (isTruthy(condition))
-            return eval(expression.consequence)
+            return eval(expression.consequence, environment)
         else if (expression.alternative != null)
-            return eval(expression.alternative)
+            return eval(expression.alternative, environment)
         return NULL
     }
 
-    private fun evalStatements(statements: List<Statement>): Object {
+    private fun evalStatements(statements: List<Statement>, environment: Environment): Object {
         var result: Object = NULL
         statements.forEach {
-            result = eval(it)
+            result = eval(it, environment)
             if (result.type == ObjectType.RETURN_VALUE || result.type == ObjectType.ERROR)
                 return result
         }
 
         return result
     }
+
+    private fun evalIdentifier(identifier: IdentifierExpression, environment: Environment) =
+            environment.get(identifier.value) ?: Error("identifier not found: ${identifier.value}")
 
     private fun evalInfixExpression(operator: String, left: Object, right: Object): Object {
         if (left.type == ObjectType.INTEGER && right.type == ObjectType.INTEGER)
