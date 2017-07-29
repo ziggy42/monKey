@@ -34,9 +34,7 @@ class Parser(private val lexer: Lexer) {
 
         nextToken()
 
-        val right = parseExpression(Precedence.PREFIX)
-
-        PrefixExpression(token, operator, right)
+        PrefixExpression(token, operator, parseExpression(Precedence.PREFIX))
     }
 
     private val parseInfixExpression: InfixParseFunction = {
@@ -46,9 +44,8 @@ class Parser(private val lexer: Lexer) {
 
         val precedence = currentPrecedence()
         nextToken()
-        val right = parseExpression(precedence)
 
-        InfixExpression(token, operator, left, right)
+        InfixExpression(token, operator, left, parseExpression(precedence))
     }
 
     private val parseGroupedExpression: PrefixParseFunction = {
@@ -100,14 +97,12 @@ class Parser(private val lexer: Lexer) {
         if (!expectPeek(TokenType.LPAREN))
             throw UnexpectedTokenException(TokenType.LPAREN, peekToken.tokenType)
 
-        val parameters = this.parseFunctionParameters()
+        val parameters = parseFunctionParameters()
 
         if (!expectPeek(TokenType.LBRACE))
             throw UnexpectedTokenException(TokenType.LBRACE, peekToken.tokenType)
 
-        val body = parseBlockStatement()
-
-        FunctionLiteralExpression(fnToken, parameters, body)
+        FunctionLiteralExpression(fnToken, parameters, parseBlockStatement())
     }
 
     private val parseCallExpression: InfixParseFunction = {
