@@ -18,6 +18,7 @@ import monkey.ast.statements.Statement
 object Evaluator {
     private val TRUE = Boolean(true)
     private val FALSE = Boolean(false)
+    private val NULL = Null()
 
     fun eval(node: Node): Object = when (node::class) {
         Program::class -> evalStatements((node as Program).statements)
@@ -28,7 +29,7 @@ object Evaluator {
     }
 
     private fun evalStatements(statements: List<Statement>): Object {
-        var result: Object = Null()
+        var result: Object = NULL
         // TODO why
         statements.forEach { result = eval(it) }
         return result
