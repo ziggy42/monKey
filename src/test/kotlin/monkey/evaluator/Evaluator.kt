@@ -2,6 +2,7 @@ package monkey.evaluator
 
 import com.winterbe.expekt.should
 import monkey.`object`.Integer
+import monkey.`object`.Null
 import monkey.`object`.Object
 import monkey.ast.Parser
 import monkey.lexer.StringLexer
@@ -66,6 +67,23 @@ object EvaluatorTest : Spek({
                     "!!5" to true)
                     .forEach { testBooleanObject(testEval(it.key), it.value) }
         }
+
+        it("Test conditionals") {
+            mapOf("if (true) { 10 }" to 10,
+                    "if (false) { 10 }" to Null(),
+                    "if (1) { 10 }" to 10,
+                    "if (1 < 2) { 10 }" to 10,
+                    "if (1 > 2) { 10 }" to Null(),
+                    "if (1 > 2) { 10 } else { 20 }" to 20,
+                    "if (1 < 2) { 10 } else { 20 }" to 10)
+                    .forEach {
+                        val evaluated = testEval(it.key)
+                        if (it.value is Null)
+                            testNullObject(evaluated)
+                        else
+                            testIntegerObject(evaluated, it.value as Int)
+                    }
+        }
     }
 })
 
@@ -82,4 +100,8 @@ fun testIntegerObject(obj: Object, expected: Int) {
 fun testBooleanObject(obj: Object, expected: Boolean) {
     obj.should.be.instanceof(monkey.`object`.Boolean::class.java)
     (obj as monkey.`object`.Boolean).value.should.be.equal(expected)
+}
+
+fun testNullObject(obj: Object) {
+    obj.should.`is`.instanceof(Null::class.java)
 }

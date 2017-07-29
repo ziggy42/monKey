@@ -4,10 +4,8 @@ import monkey.`object`.*
 import monkey.`object`.Boolean
 import monkey.ast.Node
 import monkey.ast.Program
-import monkey.ast.expressions.BooleanExpression
-import monkey.ast.expressions.InfixExpression
-import monkey.ast.expressions.IntegerLiteralExpression
-import monkey.ast.expressions.PrefixExpression
+import monkey.ast.expressions.*
+import monkey.ast.statements.BlockStatement
 import monkey.ast.statements.ExpressionStatement
 import monkey.ast.statements.Statement
 
@@ -36,7 +34,18 @@ object Evaluator {
             val right = eval(infixExpression.right)
             evalInfixExpression(infixExpression.operator, left, right)
         }
+        BlockStatement::class -> evalStatements((node as BlockStatement).statements)
+        IfExpression::class -> evalIfExpression(node as IfExpression)
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
+    }
+
+    private fun evalIfExpression(expression: IfExpression): Object {
+        val condition = eval(expression.condition)
+        if (isTruthy(condition))
+            return eval(expression.consequence)
+        else if (expression.alternative != null)
+            return eval(expression.alternative)
+        return NULL
     }
 
     private fun evalStatements(statements: List<Statement>): Object {
@@ -94,4 +103,11 @@ object Evaluator {
     }
 
     private fun nativeBoolToBooleanObject(boolean: kotlin.Boolean) = if (boolean) TRUE else FALSE
+
+    private fun isTruthy(obj: Object) = when (obj) {
+        NULL -> false
+        TRUE -> true
+        FALSE -> false
+        else -> true
+    }
 }
