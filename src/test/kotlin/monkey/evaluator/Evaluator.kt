@@ -16,7 +16,11 @@ import org.jetbrains.spek.api.dsl.it
 object EvaluatorTest : Spek({
     describe("evaluator") {
         it("Test evaluation of integer expressions") {
-            mapOf("5" to 5, "10" to 10).forEach { testIntegerObject(testEval(it.key), it.value) }
+            mapOf("5" to 5,
+                    "10" to 10,
+                    "-5" to -5,
+                    "-10" to -10)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
 
         it("Test evaluation of boolean expressions") {

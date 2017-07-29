@@ -43,7 +43,14 @@ object Evaluator {
 
     private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {
         "!" -> evalBangOperatorExpression(right)
+        "-" -> evalMinusPrefixOperatorExpression(right)
         else -> throw RuntimeException("Unsupported operator $operator")
+    }
+
+    private fun evalMinusPrefixOperatorExpression(right: Object): Object {
+        if (right !is Integer)
+            throw RuntimeException("Expecting an Integer but got $right")
+        return Integer(-right.value)
     }
 
     private fun evalBangOperatorExpression(right: Object) = when (right) {
