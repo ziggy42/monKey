@@ -27,19 +27,32 @@ object Evaluator {
         PrefixExpression::class -> {
             val prefixExpression = node as PrefixExpression
             val right = eval(prefixExpression.right)
-            evalPrefixExpression(prefixExpression.operator, right)
+            if (isError(right))
+                right
+            else
+                evalPrefixExpression(prefixExpression.operator, right)
         }
         InfixExpression::class -> {
             val infixExpression = node as InfixExpression
             val left = eval(infixExpression.left)
-            val right = eval(infixExpression.right)
-            evalInfixExpression(infixExpression.operator, left, right)
+            if (isError(left))
+                left
+            else {
+                val right = eval(infixExpression.right)
+                if (isError(right))
+                    right
+                else
+                    evalInfixExpression(infixExpression.operator, left, right)
+            }
         }
         BlockStatement::class -> evalStatements((node as BlockStatement).statements)
         IfExpression::class -> evalIfExpression(node as IfExpression)
         ReturnStatement::class -> {
             val returnValue = eval((node as ReturnStatement).returnValue)
-            ReturnValue(returnValue)
+            if (isError(returnValue))
+                returnValue
+            else
+                ReturnValue(returnValue)
         }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
@@ -48,8 +61,12 @@ object Evaluator {
         var result: Object = NULL
         program.statements.forEach {
             result = eval(it)
-            if (result.type == ObjectType.RETURN_VALUE)
-                return (result as ReturnValue).value
+
+            @Suppress("NON_EXHAUSTIVE_WHEN")
+            when (result.type) {
+                ObjectType.RETURN_VALUE -> return (result as ReturnValue).value
+                ObjectType.ERROR -> return result
+            }
         }
 
         return result
@@ -57,6 +74,9 @@ object Evaluator {
 
     private fun evalIfExpression(expression: IfExpression): Object {
         val condition = eval(expression.condition)
+        if (isError(condition))
+            return condition
+
         if (isTruthy(condition))
             return eval(expression.consequence)
         else if (expression.alternative != null)
@@ -68,7 +88,7 @@ object Evaluator {
         var result: Object = NULL
         statements.forEach {
             result = eval(it)
-            if (result.type == ObjectType.RETURN_VALUE)
+            if (result.type == ObjectType.RETURN_VALUE || result.type == ObjectType.ERROR)
                 return result
         }
 
@@ -82,13 +102,13 @@ object Evaluator {
         if (left.type == ObjectType.BOOLEAN && right.type == ObjectType.BOOLEAN)
             return evalInfixBooleanExpression(operator, left as Boolean, right as Boolean)
 
-        throw RuntimeException("Unsupported operator '$operator' between $left and $right")
+        return Error("type mismatch: ${left.type} $operator ${right.type}")
     }
 
     private fun evalInfixBooleanExpression(operator: String, left: Boolean, right: Boolean) = when (operator) {
         "==" -> nativeBoolToBooleanObject(left === right)
         "!=" -> nativeBoolToBooleanObject(left !== right)
-        else -> throw RuntimeException("Unsupported operator $operator between booleans")
+        else -> Error("unknown operator: ${left.type} $operator ${right.type}")
     }
 
     private fun evalInfixIntegerExpression(operator: String, left: Integer, right: Integer) = when (operator) {
@@ -100,20 +120,19 @@ object Evaluator {
         "<" -> nativeBoolToBooleanObject(left.value < right.value)
         "==" -> nativeBoolToBooleanObject(left.value == right.value)
         "!=" -> nativeBoolToBooleanObject(left.value != right.value)
-        else -> throw RuntimeException("Unsupported operator $operator between integers")
+        else -> Error("unknown operator: ${left.type} $operator ${right.type}")
     }
 
     private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {
         "!" -> evalBangOperatorExpression(right)
         "-" -> evalMinusPrefixOperatorExpression(right)
-        else -> throw RuntimeException("Unsupported operator $operator")
+        else -> Error("unknown operator: $operator${right.type}")
     }
 
-    private fun evalMinusPrefixOperatorExpression(right: Object): Object {
-        if (right !is Integer)
-            throw RuntimeException("Expecting an Integer but got $right")
-        return Integer(-right.value)
-    }
+    private fun evalMinusPrefixOperatorExpression(right: Object): Object =
+            if (right !is Integer)
+                Error("unknown operator: -${right.type}")
+            else Integer(-right.value)
 
     private fun evalBangOperatorExpression(right: Object) = when (right) {
         TRUE -> FALSE
@@ -130,4 +149,6 @@ object Evaluator {
         FALSE -> false
         else -> true
     }
+
+    private fun isError(obj: Object) = obj.type == ObjectType.ERROR
 }

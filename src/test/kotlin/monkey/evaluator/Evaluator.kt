@@ -93,6 +93,18 @@ object EvaluatorTest : Spek({
                     "if (10 > 1) { if (10 > 1) { return 10; } return 1; }" to 10)
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
+
+        it("Test error handling") {
+            mapOf("5 + true;" to "type mismatch: INTEGER + BOOLEAN",
+                    "5 + true; 5;" to "type mismatch: INTEGER + BOOLEAN",
+                    "-true" to "unknown operator: -BOOLEAN",
+                    "true + false;" to "unknown operator: BOOLEAN + BOOLEAN",
+                    "5; true + false; 5" to "unknown operator: BOOLEAN + BOOLEAN",
+                    "if (10 > 1) { true + false; }" to "unknown operator: BOOLEAN + BOOLEAN",
+                    "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }" to
+                            "unknown operator: BOOLEAN + BOOLEAN")
+                    .forEach { testError(testEval(it.key), it.value) }
+        }
     }
 })
 
@@ -113,4 +125,9 @@ fun testBooleanObject(obj: Object, expected: Boolean) {
 
 fun testNullObject(obj: Object) {
     obj.should.`is`.instanceof(Null::class.java)
+}
+
+fun testError(obj: Object, expected: String) {
+    obj.should.be.instanceof(monkey.`object`.Error::class.java)
+    (obj as monkey.`object`.Error).message.should.be.equal(expected)
 }
