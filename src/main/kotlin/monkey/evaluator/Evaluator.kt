@@ -24,7 +24,7 @@ object Evaluator {
         Program::class -> evalStatements((node as Program).statements)
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression)
         IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
-        BooleanExpression::class -> if ((node as BooleanExpression).value) TRUE else FALSE
+        BooleanExpression::class -> nativeBoolToBooleanObject((node as BooleanExpression).value)
         PrefixExpression::class -> {
             val prefixExpression = node as PrefixExpression
             val right = eval(prefixExpression.right)
@@ -58,6 +58,10 @@ object Evaluator {
         "-" -> Integer(left.value - right.value)
         "*" -> Integer(left.value * right.value)
         "/" -> Integer(left.value / right.value)
+        ">" -> nativeBoolToBooleanObject(left.value > right.value)
+        "<" -> nativeBoolToBooleanObject(left.value < right.value)
+        "==" -> nativeBoolToBooleanObject(left.value == right.value)
+        "!=" -> nativeBoolToBooleanObject(left.value != right.value)
         else -> throw RuntimeException("Unsupported operator $operator")
     }
 
@@ -79,4 +83,6 @@ object Evaluator {
         NULL -> TRUE
         else -> FALSE
     }
+
+    private fun nativeBoolToBooleanObject(boolean: kotlin.Boolean) = if (boolean) TRUE else FALSE
 }
