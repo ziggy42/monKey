@@ -5,11 +5,11 @@ package monkey.`object`
  * @since 7/29/17
  */
 class Environment(val outer: Environment? = null) {
-    private val store = mutableMapOf<String, Object>()
+    private val store = mutableMapOf<String, MonkeyObject>()
 
-    fun get(name: String): Object? = store[name] ?: outer?.get(name)
+    fun get(name: String): MonkeyObject? = store[name] ?: outer?.get(name)
 
-    fun set(name: String, value: Object): Object {
+    fun set(name: String, value: MonkeyObject): MonkeyObject {
         store[name] = value
         return value
     }

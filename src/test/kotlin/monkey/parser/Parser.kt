@@ -67,6 +67,18 @@ let foobar = y;
             }
         }
 
+        it("Parse string literal expressions") {
+            val program = Parser(StringLexer(""""foo";""")).parseProgram()
+
+            testProgram(program, 1)
+
+            program.statements.forEach {
+                it.should.instanceof(ExpressionStatement::class.java)
+                val expressionStatement = it as ExpressionStatement
+                testStringLiteralExpression(expressionStatement.expression, "foo")
+            }
+        }
+
         it("Parse prefix expressions") {
             val operators = arrayOf("-", "!")
 
@@ -284,6 +296,11 @@ private fun testIdentifierExpression(expression: Expression, value: String) {
 private fun testIntegerLiteralExpression(expression: Expression, value: Int) {
     expression.should.instanceof(IntegerLiteralExpression::class.java)
     (expression as IntegerLiteralExpression).value.should.equal(value)
+}
+
+private fun testStringLiteralExpression(expression: Expression, value: String) {
+    expression.should.instanceof(StringLiteralExpression::class.java)
+    (expression as StringLiteralExpression).value.should.equal(value)
 }
 
 private fun testPrefixExpression(

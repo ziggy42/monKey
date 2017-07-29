@@ -112,6 +112,7 @@ class Parser(private val lexer: Lexer) {
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(
             TokenType.IDENT to { IdentifierExpression(this.currentToken, this.currentToken.literal) },
             TokenType.INT to { IntegerLiteralExpression(this.currentToken, this.currentToken.literal.toInt()) },
+            TokenType.STRING to { StringLiteralExpression(this.currentToken, this.currentToken.literal) },
             TokenType.BANG to parsePrefixExpression,
             TokenType.MINUS to parsePrefixExpression,
             TokenType.LPAREN to parseGroupedExpression,

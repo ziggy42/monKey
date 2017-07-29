@@ -1,7 +1,6 @@
 package monkey.evaluator
 
 import monkey.`object`.*
-import monkey.`object`.Boolean
 import monkey.`object`.Function
 import monkey.ast.Node
 import monkey.ast.Program
@@ -13,14 +12,15 @@ import monkey.ast.statements.*
  * @since 7/29/17
  */
 object Evaluator {
-    private val TRUE = Boolean(true)
-    private val FALSE = Boolean(false)
-    private val NULL = Null()
+    private val TRUE = MonkeyBoolean(true)
+    private val FALSE = MonkeyBoolean(false)
+    private val NULL = MonkeyNull()
 
-    fun eval(node: Node, environment: Environment): Object = when (node::class) {
+    fun eval(node: Node, environment: Environment): MonkeyObject = when (node::class) {
         Program::class -> evalProgram((node as Program), environment)
         ExpressionStatement::class -> eval((node as ExpressionStatement).expression, environment)
-        IntegerLiteralExpression::class -> Integer((node as IntegerLiteralExpression).value)
+        IntegerLiteralExpression::class -> MonkeyInteger((node as IntegerLiteralExpression).value)
+        StringLiteralExpression::class -> MonkeyString((node as StringLiteralExpression).value)
         BooleanExpression::class -> nativeBoolToBooleanObject((node as BooleanExpression).value)
         PrefixExpression::class -> {
             val prefixExpression = node as PrefixExpression
@@ -81,7 +81,7 @@ object Evaluator {
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
-    private fun evalExpressions(arguments: List<Expression>, environment: Environment): List<Object> =
+    private fun evalExpressions(arguments: List<Expression>, environment: Environment): List<MonkeyObject> =
             arguments.map {
                 val evaluated = eval(it, environment)
                 if (isError(evaluated))
@@ -89,8 +89,8 @@ object Evaluator {
                 evaluated
             }
 
-    private fun evalProgram(program: Program, environment: Environment): Object {
-        var result: Object = NULL
+    private fun evalProgram(program: Program, environment: Environment): MonkeyObject {
+        var result: MonkeyObject = NULL
         program.statements.forEach {
             result = eval(it, environment)
 
@@ -104,7 +104,7 @@ object Evaluator {
         return result
     }
 
-    private fun evalIfExpression(expression: IfExpression, environment: Environment): Object {
+    private fun evalIfExpression(expression: IfExpression, environment: Environment): MonkeyObject {
         val condition = eval(expression.condition, environment)
         if (isError(condition))
             return condition
@@ -116,8 +116,8 @@ object Evaluator {
         return NULL
     }
 
-    private fun evalStatements(statements: List<Statement>, environment: Environment): Object {
-        var result: Object = NULL
+    private fun evalStatements(statements: List<Statement>, environment: Environment): MonkeyObject {
+        var result: MonkeyObject = NULL
         statements.forEach {
             result = eval(it, environment)
             if (result.type == ObjectType.RETURN_VALUE || result.type == ObjectType.ERROR)
@@ -130,53 +130,64 @@ object Evaluator {
     private fun evalIdentifier(identifier: IdentifierExpression, environment: Environment) =
             environment.get(identifier.value) ?: Error("identifier not found: ${identifier.value}")
 
-    private fun evalInfixExpression(operator: String, left: Object, right: Object): Object {
+    private fun evalInfixExpression(operator: String, left: MonkeyObject, right: MonkeyObject): MonkeyObject {
         if (left.type == ObjectType.INTEGER && right.type == ObjectType.INTEGER)
-            return evalInfixIntegerExpression(operator, left as Integer, right as Integer)
+            return evalInfixIntegerExpression(operator, left as MonkeyInteger, right as MonkeyInteger)
 
         if (left.type == ObjectType.BOOLEAN && right.type == ObjectType.BOOLEAN)
-            return evalInfixBooleanExpression(operator, left as Boolean, right as Boolean)
+            return evalInfixBooleanExpression(operator, left as MonkeyBoolean, right as MonkeyBoolean)
+
+        if (left.type == ObjectType.STRING && right.type == ObjectType.STRING)
+            return evalInfixStringExpression(operator, left as MonkeyString, right as MonkeyString)
 
         return Error("type mismatch: ${left.type} $operator ${right.type}")
     }
 
-    private fun evalInfixBooleanExpression(operator: String, left: Boolean, right: Boolean) = when (operator) {
-        "==" -> nativeBoolToBooleanObject(left === right)
-        "!=" -> nativeBoolToBooleanObject(left !== right)
-        else -> Error("unknown operator: ${left.type} $operator ${right.type}")
-    }
+    private fun evalInfixStringExpression(operator: String, left: MonkeyString, right: MonkeyString) =
+            when (operator) {
+                "+" -> MonkeyString(left.value + right.value)
+                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+            }
 
-    private fun evalInfixIntegerExpression(operator: String, left: Integer, right: Integer) = when (operator) {
-        "+" -> Integer(left.value + right.value)
-        "-" -> Integer(left.value - right.value)
-        "*" -> Integer(left.value * right.value)
-        "/" -> Integer(left.value / right.value)
-        ">" -> nativeBoolToBooleanObject(left.value > right.value)
-        "<" -> nativeBoolToBooleanObject(left.value < right.value)
-        "==" -> nativeBoolToBooleanObject(left.value == right.value)
-        "!=" -> nativeBoolToBooleanObject(left.value != right.value)
-        else -> Error("unknown operator: ${left.type} $operator ${right.type}")
-    }
+    private fun evalInfixBooleanExpression(operator: String, left: MonkeyBoolean, right: MonkeyBoolean) =
+            when (operator) {
+                "==" -> nativeBoolToBooleanObject(left === right)
+                "!=" -> nativeBoolToBooleanObject(left !== right)
+                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+            }
 
-    private fun evalPrefixExpression(operator: String, right: Object) = when (operator) {
+    private fun evalInfixIntegerExpression(operator: String, left: MonkeyInteger, right: MonkeyInteger) =
+            when (operator) {
+                "+" -> MonkeyInteger(left.value + right.value)
+                "-" -> MonkeyInteger(left.value - right.value)
+                "*" -> MonkeyInteger(left.value * right.value)
+                "/" -> MonkeyInteger(left.value / right.value)
+                ">" -> nativeBoolToBooleanObject(left.value > right.value)
+                "<" -> nativeBoolToBooleanObject(left.value < right.value)
+                "==" -> nativeBoolToBooleanObject(left.value == right.value)
+                "!=" -> nativeBoolToBooleanObject(left.value != right.value)
+                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+            }
+
+    private fun evalPrefixExpression(operator: String, right: MonkeyObject) = when (operator) {
         "!" -> evalBangOperatorExpression(right)
         "-" -> evalMinusPrefixOperatorExpression(right)
         else -> Error("unknown operator: $operator${right.type}")
     }
 
-    private fun evalMinusPrefixOperatorExpression(right: Object): Object =
-            if (right !is Integer)
+    private fun evalMinusPrefixOperatorExpression(right: MonkeyObject): MonkeyObject =
+            if (right !is MonkeyInteger)
                 Error("unknown operator: -${right.type}")
-            else Integer(-right.value)
+            else MonkeyInteger(-right.value)
 
-    private fun evalBangOperatorExpression(right: Object) = when (right) {
+    private fun evalBangOperatorExpression(right: MonkeyObject) = when (right) {
         TRUE -> FALSE
         FALSE -> TRUE
         NULL -> TRUE
         else -> FALSE
     }
 
-    private fun applyFunction(function: Object, args: List<Object>): Object {
+    private fun applyFunction(function: MonkeyObject, args: List<MonkeyObject>): MonkeyObject {
         if (function !is Function)
             return Error("not a function: $function")
 
@@ -185,9 +196,9 @@ object Evaluator {
         return unwrapReturnValue(evaluated)
     }
 
-    private fun unwrapReturnValue(evaluated: Object): Object = (evaluated as? ReturnValue)?.value ?: evaluated
+    private fun unwrapReturnValue(evaluated: MonkeyObject): MonkeyObject = (evaluated as? ReturnValue)?.value ?: evaluated
 
-    private fun extendFunctionEnv(function: Function, arguments: List<Object>): Environment {
+    private fun extendFunctionEnv(function: Function, arguments: List<MonkeyObject>): Environment {
         val env = function.env.newEnclosedEnvironment()
         function.parameters.forEachIndexed { index, param -> env.set(param.value, arguments[index]) }
         return env
@@ -195,12 +206,12 @@ object Evaluator {
 
     private fun nativeBoolToBooleanObject(boolean: kotlin.Boolean) = if (boolean) TRUE else FALSE
 
-    private fun isTruthy(obj: Object) = when (obj) {
+    private fun isTruthy(obj: MonkeyObject) = when (obj) {
         NULL -> false
         TRUE -> true
         FALSE -> false
         else -> true
     }
 
-    private fun isError(obj: Object) = obj.type == ObjectType.ERROR
+    private fun isError(obj: MonkeyObject) = obj.type == ObjectType.ERROR
 }

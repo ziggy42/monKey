@@ -141,5 +141,19 @@ if (5 < 10) {
                     Token(TokenType.RBRACE, "}"))
                     .forEach { lexer.nextToken().should.equal(it) }
         }
+
+        it("extract tokens from code snippet with strings") {
+            val codeSnippet = """
+"foobar"
+"foo bar"
+"""
+
+            val lexer = StringLexer(codeSnippet)
+            arrayOf(
+                    Token(TokenType.STRING, "foobar"),
+                    Token(TokenType.STRING, "foo bar"))
+                    .forEach { lexer.nextToken().should.equal(it) }
+
+        }
     }
 })

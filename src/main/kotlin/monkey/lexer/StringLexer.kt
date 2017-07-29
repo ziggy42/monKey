@@ -41,6 +41,7 @@ class StringLexer(private val input: String) : Lexer {
             '>' -> Token(TokenType.GT, this.char.toString())
             '{' -> Token(TokenType.LBRACE, this.char.toString())
             '}' -> Token(TokenType.RBRACE, this.char.toString())
+            '"' -> Token(TokenType.STRING, readString())
             0.toChar() -> Token(TokenType.EOF, this.char.toString())
             else -> {
                 return if (isIdentifier(char)) {
@@ -56,6 +57,15 @@ class StringLexer(private val input: String) : Lexer {
 
         readChar()
         return token
+    }
+
+    private fun readString(): String {
+        val position = this.position + 1
+        do {
+            readChar()
+        } while (this.char != '"' && this.char != 0.toChar())
+
+        return this.input.substring(position, this.position)
     }
 
     private fun skipSeparators() {

@@ -34,6 +34,13 @@ object EvaluatorTest : Spek({
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
 
+        it("Test evaluation of string expressions") {
+            mapOf(""" "foo" """ to "foo",
+                    """ "bar" """ to "bar",
+                    """ "foo" + "bar" """ to "foobar")
+                    .forEach { testStringObject(testEval(it.key), it.value) }
+        }
+
         it("Test evaluation of boolean expressions") {
             mapOf("true" to true,
                     "false" to false,
@@ -69,15 +76,15 @@ object EvaluatorTest : Spek({
 
         it("Test conditionals") {
             mapOf("if (true) { 10 }" to 10,
-                    "if (false) { 10 }" to Null(),
+                    "if (false) { 10 }" to MonkeyNull(),
                     "if (1) { 10 }" to 10,
                     "if (1 < 2) { 10 }" to 10,
-                    "if (1 > 2) { 10 }" to Null(),
+                    "if (1 > 2) { 10 }" to MonkeyNull(),
                     "if (1 > 2) { 10 } else { 20 }" to 20,
                     "if (1 < 2) { 10 } else { 20 }" to 10)
                     .forEach {
                         val evaluated = testEval(it.key)
-                        if (it.value is Null)
+                        if (it.value is MonkeyNull)
                             testNullObject(evaluated)
                         else
                             testIntegerObject(evaluated, it.value as Int)
@@ -102,7 +109,8 @@ object EvaluatorTest : Spek({
                     "if (10 > 1) { true + false; }" to "unknown operator: BOOLEAN + BOOLEAN",
                     "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }" to
                             "unknown operator: BOOLEAN + BOOLEAN",
-                    "foobar" to "identifier not found: foobar")
+                    "foobar" to "identifier not found: foobar",
+                    """ "Hello" - "World" """ to "unknown operator: STRING - STRING")
                     .forEach { testError(testEval(it.key), it.value) }
         }
 
@@ -127,27 +135,32 @@ object EvaluatorTest : Spek({
     }
 })
 
-fun testEval(input: String): Object {
+fun testEval(input: String): MonkeyObject {
     val environment = Environment()
     val program = Parser(StringLexer(input)).parseProgram()
     return Evaluator.eval(program, environment)
 }
 
-fun testIntegerObject(obj: Object, expected: Int) {
-    obj.should.be.instanceof(Integer::class.java)
-    (obj as Integer).value.should.be.equal(expected)
+fun testIntegerObject(obj: MonkeyObject, expected: Int) {
+    obj.should.be.instanceof(MonkeyInteger::class.java)
+    (obj as MonkeyInteger).value.should.be.equal(expected)
 }
 
-fun testBooleanObject(obj: Object, expected: Boolean) {
-    obj.should.be.instanceof(monkey.`object`.Boolean::class.java)
-    (obj as monkey.`object`.Boolean).value.should.be.equal(expected)
+fun testStringObject(obj: MonkeyObject, expected: String) {
+    obj.should.be.instanceof(MonkeyString::class.java)
+    (obj as MonkeyString).value.should.be.equal(expected)
 }
 
-fun testNullObject(obj: Object) {
-    obj.should.`is`.instanceof(Null::class.java)
+fun testBooleanObject(obj: MonkeyObject, expected: Boolean) {
+    obj.should.be.instanceof(monkey.`object`.MonkeyBoolean::class.java)
+    (obj as monkey.`object`.MonkeyBoolean).value.should.be.equal(expected)
 }
 
-fun testError(obj: Object, expected: String) {
+fun testNullObject(obj: MonkeyObject) {
+    obj.should.`is`.instanceof(MonkeyNull::class.java)
+}
+
+fun testError(obj: MonkeyObject, expected: String) {
     obj.should.be.instanceof(monkey.`object`.Error::class.java)
     (obj as monkey.`object`.Error).message.should.be.equal(expected)
 }

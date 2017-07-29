@@ -10,7 +10,7 @@ import monkey.ast.statements.BlockStatement
 class Function(
         val parameters: List<IdentifierExpression>,
         val body: BlockStatement,
-        val env: Environment) : Object(ObjectType.FUNCTION) {
+        val env: Environment) : MonkeyObject(ObjectType.FUNCTION) {
 
-    override fun inspect() = "fn (${parameters.map { it.value }.joinToString(", ")}) {\n$body\n}"
+    override fun inspect() = "fn (${parameters.map { it.value }.joinToString(", ")}) {\n\t$body\n}"
 }
