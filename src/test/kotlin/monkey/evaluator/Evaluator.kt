@@ -148,6 +148,29 @@ object EvaluatorTest : Spek({
                             testError(evaluated, it.value as String)
                     }
         }
+
+        it("Test array literals") {
+            val evaluated = testEval("[1, 2 * 2, 3 + 3]")
+
+            evaluated.should.be.instanceof(MonkeyArray::class.java)
+            testIntegerObject((evaluated as MonkeyArray).elements[0], 1)
+            testIntegerObject(evaluated.elements[1], 4)
+            testIntegerObject(evaluated.elements[2], 6)
+        }
+
+        it("Test array index expressions") {
+            mapOf("[1, 2, 3][0]" to 1,
+                    "[1, 2, 3][1]" to 2,
+                    "[1, 2, 3][2]" to 3,
+                    "let i = 0; [1][i];" to 1,
+                    "[1, 2, 3][1 + 1];" to 3,
+                    "let myArray = [1, 2, 3]; myArray[2];" to 3,
+                    "let myArray = [1, 2, 3]; myArray[0] + myArray[1] + myArray[2];" to 6,
+                    "let myArray = [1, 2, 3]; let i = myArray[0]; myArray[i]" to 2)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
+
+            listOf("[1, 2, 3][3]", "[1, 2, 3][-1]").forEach { testNullObject(testEval(it)) }
+        }
     }
 })
 

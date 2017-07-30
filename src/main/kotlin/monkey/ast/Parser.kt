@@ -20,7 +20,8 @@ val PREFERENCES_MAP = mapOf(
         TokenType.MINUS to Precedence.SUM,
         TokenType.SLASH to Precedence.PRODUCT,
         TokenType.ASTERISK to Precedence.PRODUCT,
-        TokenType.LPAREN to Precedence.CALL)
+        TokenType.LPAREN to Precedence.CALL,
+        TokenType.LBRACKET to Precedence.INDEX)
 
 /**
  * @author andrea
@@ -56,10 +57,6 @@ class Parser(private val lexer: Lexer) {
             throw UnexpectedTokenException(TokenType.LPAREN, peekToken.tokenType)
 
         expression
-    }
-
-    private val parseBooleanExpression: PrefixParseFunction = {
-        BooleanExpression(this.currentToken, this.currentToken.tokenType == TokenType.TRUE)
     }
 
     private val parseIfExpression: PrefixParseFunction = {
@@ -106,18 +103,32 @@ class Parser(private val lexer: Lexer) {
     }
 
     private val parseCallExpression: InfixParseFunction = {
-        CallExpression(currentToken, it, parseCallArguments())
+        CallExpression(currentToken, it, parseExpressionList(TokenType.RPAREN))
+    }
+
+    private val parseIndexExpression: InfixParseFunction = {
+        val token = currentToken
+
+        nextToken()
+
+        val index = parseExpression(Precedence.LOWEST)
+
+        if (!expectPeek(TokenType.RBRACKET))
+            throw UnexpectedTokenException(TokenType.LBRACE, peekToken.tokenType)
+
+        IndexExpression(token, it, index)
     }
 
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(
             TokenType.IDENT to { IdentifierExpression(this.currentToken, this.currentToken.literal) },
             TokenType.INT to { IntegerLiteralExpression(this.currentToken, this.currentToken.literal.toInt()) },
             TokenType.STRING to { StringLiteralExpression(this.currentToken, this.currentToken.literal) },
+            TokenType.LBRACKET to { ArrayLiteralExpression(currentToken, parseExpressionList(TokenType.RBRACKET)) },
+            TokenType.TRUE to { BooleanExpression(this.currentToken, true) },
+            TokenType.FALSE to { BooleanExpression(this.currentToken, false) },
             TokenType.BANG to parsePrefixExpression,
             TokenType.MINUS to parsePrefixExpression,
             TokenType.LPAREN to parseGroupedExpression,
-            TokenType.TRUE to parseBooleanExpression,
-            TokenType.FALSE to parseBooleanExpression,
             TokenType.IF to parseIfExpression,
             TokenType.FUNCTION to parseFunctionLiteralExpression)
     private val INFIX_PARSE_FUNCTIONS: Map<TokenType, InfixParseFunction> = mapOf(
@@ -129,7 +140,8 @@ class Parser(private val lexer: Lexer) {
             TokenType.MINUS to parseInfixExpression,
             TokenType.SLASH to parseInfixExpression,
             TokenType.ASTERISK to parseInfixExpression,
-            TokenType.LPAREN to parseCallExpression)
+            TokenType.LPAREN to parseCallExpression,
+            TokenType.LBRACKET to parseIndexExpression)
 
     private var currentToken: Token = this.lexer.nextToken()
     private var peekToken: Token = this.lexer.nextToken()
@@ -248,28 +260,28 @@ class Parser(private val lexer: Lexer) {
         return identifiers
     }
 
-    private fun parseCallArguments(): List<Expression> {
+    private fun parseExpressionList(endTokenType: TokenType): List<Expression> {
         if (peekToken.tokenType == TokenType.RPAREN) {
             nextToken()
             return emptyList()
         }
 
-        val arguments = mutableListOf<Expression>()
+        val elements = mutableListOf<Expression>()
 
         nextToken()
 
-        arguments.add(parseExpression(Precedence.LOWEST))
+        elements.add(parseExpression(Precedence.LOWEST))
 
         while (peekToken.tokenType == TokenType.COMMA) {
             nextToken()
             nextToken()
-            arguments.add(parseExpression(Precedence.LOWEST))
+            elements.add(parseExpression(Precedence.LOWEST))
         }
 
-        if (!expectPeek(TokenType.RPAREN))
-            throw UnexpectedTokenException(TokenType.RPAREN, peekToken.tokenType)
+        if (!expectPeek(endTokenType))
+            throw UnexpectedTokenException(endTokenType, peekToken.tokenType)
 
-        return arguments
+        return elements
     }
 
     private fun peekPrecedence() = PREFERENCES_MAP[peekToken.tokenType] ?: Precedence.LOWEST

@@ -10,5 +10,5 @@ class CallExpression(val token: Token, val function: Expression, val arguments: 
 
     override fun getTokenLiteral() = token.literal
 
-    override fun toString() = "$function (${arguments.joinToString(", ")})"
+    override fun toString() = "$function(${arguments.joinToString(", ")})"
 }

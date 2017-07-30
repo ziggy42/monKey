@@ -11,5 +11,6 @@ enum class Precedence {
     SUM,
     PRODUCT,
     PREFIX,
-    CALL
+    CALL,
+    INDEX
 }

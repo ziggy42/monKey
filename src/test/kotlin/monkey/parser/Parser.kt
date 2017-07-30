@@ -120,24 +120,25 @@ let foobar = y;
         }
 
         it("Test precedence") {
-            listOf(Pair("5 + 5", "(5 + 5)"),
-                    Pair("-a * b", "((-a) * b)"),
-                    Pair("!-a", "(!(-a))"),
-                    Pair("a + b + c", "((a + b) + c)"),
-                    Pair("a + b - c", "((a + b) - c)"),
-                    Pair("a * b * c", "((a * b) * c)"),
-                    Pair("a * b / c", "((a * b) / c)"),
-                    Pair("a + b * c + d / e - f", "(((a + (b * c)) + (d / e)) - f)"),
-                    Pair("5 > 4 == 3 < 4", "((5 > 4) == (3 < 4))"),
-                    Pair("5 < 4 != 3 > 4", "((5 < 4) != (3 > 4))"),
-                    Pair("3 + 4 * 5 == 3 * 1 + 4 * 5", "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))"),
-                    Pair("1 + (2 + 3) + 4", "((1 + (2 + 3)) + 4)"),
-                    Pair("(5 + 5) * 2", "((5 + 5) * 2)"),
-                    Pair("2 / (5 + 5)", "(2 / (5 + 5))"),
-                    Pair("-(5 + 5)", "(-(5 + 5))"),
-                    Pair("!(true == true)", "(!(true == true))"))
-                    .map { Pair(Parser(StringLexer(it.first)).parseProgram(), it.second) }
-                    .forEach { it.first.toString().should.be.equal(it.second) }
+            mapOf("5 + 5" to "(5 + 5)",
+                    "-a * b" to "((-a) * b)",
+                    "!-a" to "(!(-a))",
+                    "a + b + c" to "((a + b) + c)",
+                    "a + b - c" to "((a + b) - c)",
+                    "a * b * c" to "((a * b) * c)",
+                    "a * b / c" to "((a * b) / c)",
+                    "a + b * c + d / e - f" to "(((a + (b * c)) + (d / e)) - f)",
+                    "5 > 4 == 3 < 4" to "((5 > 4) == (3 < 4))",
+                    "5 < 4 != 3 > 4" to "((5 < 4) != (3 > 4))",
+                    "3 + 4 * 5 == 3 * 1 + 4 * 5" to "((3 + (4 * 5)) == ((3 * 1) + (4 * 5)))",
+                    "1 + (2 + 3) + 4" to "((1 + (2 + 3)) + 4)",
+                    "(5 + 5) * 2" to "((5 + 5) * 2)",
+                    "2 / (5 + 5)" to "(2 / (5 + 5))",
+                    "-(5 + 5)" to "(-(5 + 5))",
+                    "!(true == true)" to "(!(true == true))",
+                    "add(a * b[2], b[1], 2 * [1, 2][1])" to "add((a * (b[2])), (b[1]), (2 * ([1, 2][1])))",
+                    "a * [1, 2, 3, 4][b * c] * d" to "((a * ([1, 2, 3, 4][(b * c)])) * d)")
+                    .forEach { Parser(StringLexer(it.key)).parseProgram().toString().should.be.equal(it.value) }
         }
 
         it("Test if expressions") {
@@ -255,6 +256,56 @@ let foobar = y;
                     "+",
                     IntegerLiteralExpression::class.java,
                     5)
+        }
+
+        it("Test parsing array literals") {
+            val program = Parser(StringLexer("[1, 2 * 2, 3 + 3]")).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(ArrayLiteralExpression::class.java)
+
+            testIntegerLiteralExpression((expression as ArrayLiteralExpression).elements[0], 1)
+            testInfixExpression(
+                    expression.elements[1],
+                    IntegerLiteralExpression::class.java,
+                    2,
+                    "*",
+                    IntegerLiteralExpression::class.java,
+                    2)
+            testInfixExpression(
+                    expression.elements[2],
+                    IntegerLiteralExpression::class.java,
+                    3,
+                    "+",
+                    IntegerLiteralExpression::class.java,
+                    3)
+        }
+
+        it("Test parsing index expressions") {
+            val program = Parser(StringLexer("myArray[1 + 1]")).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(IndexExpression::class.java)
+
+            testIdentifierExpression((expression as IndexExpression).left, "myArray")
+
+            testInfixExpression(
+                    expression.index,
+                    IntegerLiteralExpression::class.java,
+                    1,
+                    "+",
+                    IntegerLiteralExpression::class.java,
+                    1)
         }
 
         it("Throw exceptions if code has unexpected tokens") {

@@ -155,5 +155,17 @@ if (5 < 10) {
                     .forEach { lexer.nextToken().should.equal(it) }
 
         }
+
+        it("extract tokens from code snippet with arrays") {
+            val lexer = StringLexer("[1, 2];")
+
+            arrayOf(Token(TokenType.LBRACKET, "["),
+                    Token(TokenType.INT, "1"),
+                    Token(TokenType.COMMA, ","),
+                    Token(TokenType.INT, "2"),
+                    Token(TokenType.RBRACKET, "]"),
+                    Token(TokenType.SEMICOLON, ";"))
+                    .forEach { lexer.nextToken().should.equal(it) }
+        }
     }
 })

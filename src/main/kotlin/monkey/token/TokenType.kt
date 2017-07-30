@@ -34,6 +34,8 @@ enum class TokenType {
     RPAREN,
     LBRACE,
     RBRACE,
+    LBRACKET,
+    RBRACKET,
     FUNCTION,
     LET,
     TRUE,

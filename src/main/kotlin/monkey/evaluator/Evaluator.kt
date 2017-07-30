@@ -11,6 +11,7 @@ import monkey.ast.statements.*
  * @since 7/29/17
  */
 object Evaluator {
+
     private val TRUE = MonkeyBoolean(true)
     private val FALSE = MonkeyBoolean(false)
     private val NULL = MonkeyNull()
@@ -71,6 +72,24 @@ object Evaluator {
                 return args[0]
 
             return applyFunction(function, args)
+        }
+        ArrayLiteralExpression::class -> run {
+            val elements = evalExpressions((node as ArrayLiteralExpression).elements, environment)
+            if (elements.size == 1 && isError(elements[0]))
+                return elements.first()
+
+            return MonkeyArray(elements)
+        }
+        IndexExpression::class -> run {
+            val left = eval((node as IndexExpression).left, environment)
+            if (isError(left))
+                return left
+
+            val index = eval(node.index, environment)
+            if (isError(index))
+                return index
+
+            return evalIndexExpression(left, index)
         }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
@@ -187,6 +206,19 @@ object Evaluator {
         FALSE -> TRUE
         NULL -> TRUE
         else -> FALSE
+    }
+
+    private fun evalIndexExpression(left: MonkeyObject, index: MonkeyObject): MonkeyObject {
+        if (left.type == ObjectType.ARRAY && index.type == ObjectType.INTEGER)
+            return evalArrayIndexExpression(left as MonkeyArray, index as MonkeyInteger)
+
+        return MonkeyError("index operator not supported: ${left.type}")
+    }
+
+    private fun evalArrayIndexExpression(left: MonkeyArray, index: MonkeyInteger): MonkeyObject {
+        if (index.value < 0 || index.value > left.elements.size - 1)
+            return NULL
+        return left.elements[index.value]
     }
 
     private fun applyFunction(function: MonkeyObject, args: List<MonkeyObject>) = when (function::class) {
