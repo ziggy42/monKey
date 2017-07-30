@@ -14,3 +14,14 @@ monKey is (will be) a Kotlin implementation of the monkey programming language, 
         '._ '-=-' _.'
            '-----'
 ````
+
+### Usage
+Run the `REPL`:
+```bash
+./monkey
+```
+
+Execute a script:
+```bash
+./monkey script
+```
