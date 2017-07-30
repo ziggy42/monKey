@@ -132,6 +132,23 @@ object EvaluatorTest : Spek({
                     "fn(x) { x; }(5)" to 5)
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
         }
+
+        it("Test builtin functions") {
+            mapOf(""" len("Hello"); """ to 5,
+                    """ len("") """ to 0,
+                    """ len("four") """ to 4,
+                    """ len("hello world") """ to 11,
+                    """ len(1) """ to "argument to `len` not supported, got INTEGER",
+                    """ len("one", "two") """ to "wrong number of arguments. got=2, want=1")
+                    .forEach {
+                        val evaluated = testEval(it.key)
+                        if (evaluated is MonkeyInteger)
+                            testIntegerObject(evaluated, it.value as Int)
+
+                        if (evaluated is MonkeyString)
+                            testError(evaluated, it.value as String)
+                    }
+        }
     }
 })
 

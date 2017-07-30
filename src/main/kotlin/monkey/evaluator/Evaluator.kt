@@ -127,8 +127,17 @@ object Evaluator {
         return result
     }
 
-    private fun evalIdentifier(identifier: IdentifierExpression, environment: Environment) =
-            environment.get(identifier.value) ?: Error("identifier not found: ${identifier.value}")
+    private fun evalIdentifier(identifier: IdentifierExpression, environment: Environment): MonkeyObject {
+        val monkeyObject = environment.get(identifier.value)
+        if (monkeyObject != null)
+            return monkeyObject
+
+        val builtin = BUILTINS[identifier.value]
+        if (builtin != null)
+            return builtin
+
+        return Error("identifier not found: ${identifier.value}")
+    }
 
     private fun evalInfixExpression(operator: String, left: MonkeyObject, right: MonkeyObject): MonkeyObject {
         if (left.type == ObjectType.INTEGER && right.type == ObjectType.INTEGER)
@@ -175,10 +184,9 @@ object Evaluator {
         else -> Error("unknown operator: $operator${right.type}")
     }
 
-    private fun evalMinusPrefixOperatorExpression(right: MonkeyObject): MonkeyObject =
-            if (right !is MonkeyInteger)
-                Error("unknown operator: -${right.type}")
-            else MonkeyInteger(-right.value)
+    private fun evalMinusPrefixOperatorExpression(right: MonkeyObject) = if (right !is MonkeyInteger)
+        Error("unknown operator: -${right.type}")
+    else MonkeyInteger(-right.value)
 
     private fun evalBangOperatorExpression(right: MonkeyObject) = when (right) {
         TRUE -> FALSE
@@ -187,16 +195,17 @@ object Evaluator {
         else -> FALSE
     }
 
-    private fun applyFunction(function: MonkeyObject, args: List<MonkeyObject>): MonkeyObject {
-        if (function !is Function)
-            return Error("not a function: $function")
-
-        val env = extendFunctionEnv(function, args)
-        val evaluated = eval(function.body, env)
-        return unwrapReturnValue(evaluated)
+    private fun applyFunction(function: MonkeyObject, args: List<MonkeyObject>) = when (function::class) {
+        Function::class -> {
+            val env = extendFunctionEnv(function as Function, args)
+            val evaluated = eval(function.body, env)
+            unwrapReturnValue(evaluated)
+        }
+        Builtin::class -> (function as Builtin).function(args)
+        else -> Error("not a function: $function")
     }
 
-    private fun unwrapReturnValue(evaluated: MonkeyObject): MonkeyObject = (evaluated as? ReturnValue)?.value ?: evaluated
+    private fun unwrapReturnValue(evaluated: MonkeyObject) = (evaluated as? ReturnValue)?.value ?: evaluated
 
     private fun extendFunctionEnv(function: Function, arguments: List<MonkeyObject>): Environment {
         val env = function.env.newEnclosedEnvironment()
