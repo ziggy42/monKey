@@ -2,7 +2,6 @@ package monkey.evaluator
 
 import com.winterbe.expekt.should
 import monkey.`object`.*
-import monkey.`object`.Function
 import monkey.ast.Parser
 import monkey.lexer.StringLexer
 import org.jetbrains.spek.api.Spek
@@ -180,16 +179,4 @@ fun testNullObject(obj: MonkeyObject) {
 fun testError(obj: MonkeyObject, expected: String) {
     obj.should.be.instanceof(monkey.`object`.Error::class.java)
     (obj as monkey.`object`.Error).message.should.be.equal(expected)
-}
-
-fun testFunctionObject() {
-    val input = "fn(x) { x + 2; };"
-
-    val evaluated = testEval(input)
-    evaluated.should.instanceof(Function::class.java)
-    val function = evaluated as Function
-
-    function.parameters.size.should.equal(1)
-    function.parameters[0].toString().should.equal("x")
-    function.body.toString().should.equal("(x + 2)")
 }
