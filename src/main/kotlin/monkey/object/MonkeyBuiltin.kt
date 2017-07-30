@@ -7,7 +7,7 @@ typealias BuiltinFunction = (List<MonkeyObject>) -> MonkeyObject
  * @author andrea
  * @since 7/29/17
  */
-class MonkeyBuiltin(val function: BuiltinFunction) : MonkeyObject(ObjectType.BUILTIN) {
+data class MonkeyBuiltin(val function: BuiltinFunction) : MonkeyObject(ObjectType.BUILTIN) {
 
     override fun inspect() = "builtin function"
 }

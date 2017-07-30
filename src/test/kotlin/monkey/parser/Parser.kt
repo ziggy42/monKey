@@ -308,6 +308,45 @@ let foobar = y;
                     1)
         }
 
+        it("Test parsing hash literals") {
+            val program = Parser(StringLexer(""" {"one": 1, "two": 2, "three": 3} """)).parseProgram()
+
+            println(program)
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(HashLiteralExpression::class.java)
+
+            (expression as HashLiteralExpression).pairs.size.should.be.equal(3)
+
+            val map = mapOf("one" to 1, "two" to 2, "three" to 3)
+            expression.pairs.forEach { key, value ->
+                key.should.be.instanceof(StringLiteralExpression::class.java)
+
+                testIntegerLiteralExpression(value, map[(key as StringLiteralExpression).value]!!)
+            }
+
+            // TODO different types of keys and blablabla
+        }
+
+        it("Test parsing empty hash literals") {
+            val program = Parser(StringLexer(""" {} """)).parseProgram()
+
+            testProgram(program, 1)
+
+            val statement = program.statements[0]
+            statement.should.instanceof(ExpressionStatement::class.java)
+
+            val expression = (statement as ExpressionStatement).expression
+            expression.should.instanceof(HashLiteralExpression::class.java)
+
+            (expression as HashLiteralExpression).pairs.size.should.be.equal(0)
+        }
+
         it("Throw exceptions if code has unexpected tokens") {
             val parser = Parser(StringLexer("let = 4;"))
             try {

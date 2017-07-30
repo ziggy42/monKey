@@ -30,6 +30,7 @@ enum class TokenType {
     GT,
     COMMA,
     SEMICOLON,
+    COLON,
     LPAREN,
     RPAREN,
     LBRACE,

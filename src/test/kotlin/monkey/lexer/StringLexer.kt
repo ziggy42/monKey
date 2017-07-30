@@ -167,5 +167,16 @@ if (5 < 10) {
                     Token(TokenType.SEMICOLON, ";"))
                     .forEach { lexer.nextToken().should.equal(it) }
         }
+
+        it("extract tokens from code snippet with arrays") {
+            val lexer = StringLexer("""{"foo": "bar"}""")
+
+            arrayOf(Token(TokenType.LBRACE, "{"),
+                    Token(TokenType.STRING, "foo"),
+                    Token(TokenType.COLON, ":"),
+                    Token(TokenType.STRING, "bar"),
+                    Token(TokenType.RBRACE, "}"))
+                    .forEach { lexer.nextToken().should.equal(it) }
+        }
     }
 })

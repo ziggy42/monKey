@@ -44,6 +44,7 @@ class StringLexer(private val input: String) : Lexer {
             '"' -> Token(TokenType.STRING, readString())
             '[' -> Token(TokenType.LBRACKET, this.char.toString())
             ']' -> Token(TokenType.RBRACKET, this.char.toString())
+            ':' -> Token(TokenType.COLON, this.char.toString())
             0.toChar() -> Token(TokenType.EOF, this.char.toString())
             else -> {
                 return if (isIdentifier(char)) {

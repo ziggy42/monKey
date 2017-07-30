@@ -7,7 +7,7 @@ import monkey.ast.statements.BlockStatement
  * @author andrea
  * @since 7/29/17
  */
-class MonkeyFunction(
+data class MonkeyFunction(
         val parameters: List<IdentifierExpression>,
         val body: BlockStatement,
         val env: Environment) : MonkeyObject(ObjectType.FUNCTION) {

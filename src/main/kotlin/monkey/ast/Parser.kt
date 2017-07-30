@@ -119,6 +119,32 @@ class Parser(private val lexer: Lexer) {
         IndexExpression(token, it, index)
     }
 
+    private val parseHashLiteralExpression: PrefixParseFunction = {
+        val hashToken = currentToken
+        val pairs = mutableMapOf<Expression, Expression>()
+
+        while (peekToken.tokenType != TokenType.RBRACE) {
+            nextToken()
+            val key = parseExpression(Precedence.LOWEST)
+
+            if (!expectPeek(TokenType.COLON))
+                throw UnexpectedTokenException(TokenType.COLON, peekToken.tokenType)
+
+            nextToken()
+            val value = parseExpression(Precedence.LOWEST)
+
+            pairs[key] = value
+
+            if (peekToken.tokenType != TokenType.RBRACE && !expectPeek(TokenType.COMMA))
+                throw UnexpectedTokenException(TokenType.RBRACE, peekToken.tokenType)
+        }
+
+        if (!expectPeek(TokenType.RBRACE))
+            throw UnexpectedTokenException(TokenType.RBRACE, peekToken.tokenType)
+
+        HashLiteralExpression(hashToken, pairs)
+    }
+
     private val PREFIX_PARSE_FUNCTIONS: Map<TokenType, PrefixParseFunction> = mapOf(
             TokenType.IDENT to { IdentifierExpression(this.currentToken, this.currentToken.literal) },
             TokenType.INT to { IntegerLiteralExpression(this.currentToken, this.currentToken.literal.toInt()) },
@@ -130,7 +156,8 @@ class Parser(private val lexer: Lexer) {
             TokenType.MINUS to parsePrefixExpression,
             TokenType.LPAREN to parseGroupedExpression,
             TokenType.IF to parseIfExpression,
-            TokenType.FUNCTION to parseFunctionLiteralExpression)
+            TokenType.FUNCTION to parseFunctionLiteralExpression,
+            TokenType.LBRACE to parseHashLiteralExpression)
     private val INFIX_PARSE_FUNCTIONS: Map<TokenType, InfixParseFunction> = mapOf(
             TokenType.EQ to parseInfixExpression,
             TokenType.NOT_EQ to parseInfixExpression,

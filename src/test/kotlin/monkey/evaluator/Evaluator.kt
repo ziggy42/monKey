@@ -109,7 +109,8 @@ object EvaluatorTest : Spek({
                     "if (10 > 1) { if (10 > 1) { return true + false; } return 1; }" to
                             "unknown operator: BOOLEAN + BOOLEAN",
                     "foobar" to "identifier not found: foobar",
-                    """ "Hello" - "World" """ to "unknown operator: STRING - STRING")
+                    """ "Hello" - "World" """ to "unknown operator: STRING - STRING",
+                    """{"name": "Monkey"}[fn(x) { x }];""" to "unusable as hash key: FUNCTION")
                     .forEach { testError(testEval(it.key), it.value) }
         }
 
@@ -175,6 +176,41 @@ object EvaluatorTest : Spek({
                     .forEach { testIntegerObject(testEval(it.key), it.value) }
 
             listOf("[1, 2, 3][3]", "[1, 2, 3][-1]").forEach { testNullObject(testEval(it)) }
+        }
+
+        it("Test hash literals") {
+            val input = """
+                let two = "two";
+                {
+                    "one": 10 - 9,
+                    two: 1 + 1,
+                    "thr" + "ee": 6 / 2,
+                    4: 4,
+                    true: 5,
+                    false: 6
+                }
+            """
+
+            val evaluated = testEval(input)
+
+            evaluated.should.be.instanceof(MonkeyHash::class.java)
+            testIntegerObject((evaluated as MonkeyHash).pairs[MonkeyString("one")]!!, 1)
+            testIntegerObject(evaluated.pairs[MonkeyString("two")]!!, 2)
+            testIntegerObject(evaluated.pairs[MonkeyString("three")]!!, 3)
+            testIntegerObject(evaluated.pairs[MonkeyInteger(4)]!!, 4)
+            testIntegerObject(evaluated.pairs[MonkeyBoolean(true)]!!, 5)
+            testIntegerObject(evaluated.pairs[MonkeyBoolean(false)]!!, 6)
+        }
+
+        it("Test hash index expressions") {
+            mapOf("""{"foo": 5}["foo"]""" to 5,
+                    """let key = "foo"; {"foo": 5}[key]""" to 5,
+                    """{5: 5}[5]""" to 5,
+                    """{true: 5}[true]""" to 5,
+                    """{false: 5}[false]""" to 5)
+                    .forEach { testIntegerObject(testEval(it.key), it.value) }
+
+            listOf("""{"foo": 5}["bar"]""", """{}["foo"]""").forEach { testNullObject(testEval(it)) }
         }
     }
 })

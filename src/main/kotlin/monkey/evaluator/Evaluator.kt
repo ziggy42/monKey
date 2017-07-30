@@ -91,6 +91,24 @@ object Evaluator {
 
             return evalIndexExpression(left, index)
         }
+        HashLiteralExpression::class -> run {
+            val pairs = (node as HashLiteralExpression).pairs.map {
+                val key = eval(it.key, environment)
+                if (isError(key))
+                    return@run key
+
+                if (key !is Hashable)
+                    return@run MonkeyError("unusable as hash key: ${key.type}")
+
+                val value = eval(it.value, environment)
+                if (isError(value))
+                    return@run value
+
+                Pair(key as MonkeyObject, value)
+            }.toMap().toMutableMap()
+
+            return MonkeyHash(pairs)
+        }
         else -> throw RuntimeException("Unknown node implementation ${node.javaClass}")
     }
 
@@ -212,7 +230,17 @@ object Evaluator {
         if (left.type == ObjectType.ARRAY && index.type == ObjectType.INTEGER)
             return evalArrayIndexExpression(left as MonkeyArray, index as MonkeyInteger)
 
+        if (left.type == ObjectType.HASH)
+            return evalHashIndexExpression(left as MonkeyHash, index)
+
         return MonkeyError("index operator not supported: ${left.type}")
+    }
+
+    private fun evalHashIndexExpression(left: MonkeyHash, index: MonkeyObject): MonkeyObject {
+        if (index !is Hashable)
+            return MonkeyError("unusable as hash key: ${index.type}")
+
+        return left.pairs[index] ?: NULL
     }
 
     private fun evalArrayIndexExpression(left: MonkeyArray, index: MonkeyInteger): MonkeyObject {
