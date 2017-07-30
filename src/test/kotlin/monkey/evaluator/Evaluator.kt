@@ -137,6 +137,7 @@ object EvaluatorTest : Spek({
                     """ len("") """ to 0,
                     """ len("four") """ to 4,
                     """ len("hello world") """ to 11,
+                    """ len([1, 2]) """ to 2,
                     """ len(1) """ to "argument to `len` not supported, got INTEGER",
                     """ len("one", "two") """ to "wrong number of arguments. got=2, want=1")
                     .forEach {

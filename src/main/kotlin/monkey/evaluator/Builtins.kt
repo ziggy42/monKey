@@ -13,6 +13,7 @@ val len = fun(args: List<MonkeyObject>): MonkeyObject {
     val argument = args[0]
     when (argument.type) {
         ObjectType.STRING -> return MonkeyInteger((argument as MonkeyString).value.length)
+        ObjectType.ARRAY -> return MonkeyInteger((argument as MonkeyArray).elements.size)
         else -> return MonkeyError("argument to `len` not supported, got ${argument.type}")
     }
 }
