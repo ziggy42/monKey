@@ -22,44 +22,39 @@ object Evaluator {
         IntegerLiteralExpression::class -> MonkeyInteger((node as IntegerLiteralExpression).value)
         StringLiteralExpression::class -> MonkeyString((node as StringLiteralExpression).value)
         BooleanExpression::class -> nativeBoolToBooleanObject((node as BooleanExpression).value)
-        PrefixExpression::class -> {
-            val prefixExpression = node as PrefixExpression
-            val right = eval(prefixExpression.right, environment)
+        PrefixExpression::class -> run {
+            val right = eval((node as PrefixExpression).right, environment)
             if (isError(right))
-                right
-            else
-                evalPrefixExpression(prefixExpression.operator, right)
+                return right
+
+            evalPrefixExpression(node.operator, right)
         }
-        InfixExpression::class -> {
-            val infixExpression = node as InfixExpression
-            val left = eval(infixExpression.left, environment)
+        InfixExpression::class -> run {
+            val left = eval((node as InfixExpression).left, environment)
             if (isError(left))
-                left
-            else {
-                val right = eval(infixExpression.right, environment)
-                if (isError(right))
-                    right
-                else
-                    evalInfixExpression(infixExpression.operator, left, right)
-            }
+                return left
+
+            val right = eval(node.right, environment)
+            if (isError(right))
+                return right
+
+            return evalInfixExpression(node.operator, left, right)
         }
         BlockStatement::class -> evalStatements((node as BlockStatement).statements, environment)
         IfExpression::class -> evalIfExpression(node as IfExpression, environment)
-        ReturnStatement::class -> {
+        ReturnStatement::class -> run {
             val returnValue = eval((node as ReturnStatement).returnValue, environment)
             if (isError(returnValue))
-                returnValue
-            else
-                ReturnValue(returnValue)
+                return returnValue
+
+            return ReturnValue(returnValue)
         }
-        LetStatement::class -> {
-            val letStatement = node as LetStatement
-            val value = eval(letStatement.value, environment)
+        LetStatement::class -> run {
+            val value = eval((node as LetStatement).value, environment)
             if (isError(value))
-                value
-            else {
-                environment.set(letStatement.name.value, value)
-            }
+                return value
+
+            return environment.set(node.name.value, value)
         }
         IdentifierExpression::class -> evalIdentifier(node as IdentifierExpression, environment)
         FunctionLiteralExpression::class -> {
