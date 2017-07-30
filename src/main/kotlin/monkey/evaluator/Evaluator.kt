@@ -1,7 +1,6 @@
 package monkey.evaluator
 
 import monkey.`object`.*
-import monkey.`object`.Function
 import monkey.ast.Node
 import monkey.ast.Program
 import monkey.ast.expressions.*
@@ -60,7 +59,7 @@ object Evaluator {
         FunctionLiteralExpression::class -> {
             val parameters = (node as FunctionLiteralExpression).parameters
             val body = node.body
-            Function(parameters, body, environment)
+            MonkeyFunction(parameters, body, environment)
         }
         CallExpression::class -> run {
             val function = eval((node as CallExpression).function, environment)
@@ -131,7 +130,7 @@ object Evaluator {
         if (builtin != null)
             return builtin
 
-        return Error("identifier not found: ${identifier.value}")
+        return MonkeyError("identifier not found: ${identifier.value}")
     }
 
     private fun evalInfixExpression(operator: String, left: MonkeyObject, right: MonkeyObject): MonkeyObject {
@@ -144,20 +143,20 @@ object Evaluator {
         if (left.type == ObjectType.STRING && right.type == ObjectType.STRING)
             return evalInfixStringExpression(operator, left as MonkeyString, right as MonkeyString)
 
-        return Error("type mismatch: ${left.type} $operator ${right.type}")
+        return MonkeyError("type mismatch: ${left.type} $operator ${right.type}")
     }
 
     private fun evalInfixStringExpression(operator: String, left: MonkeyString, right: MonkeyString) =
             when (operator) {
                 "+" -> MonkeyString(left.value + right.value)
-                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+                else -> MonkeyError("unknown operator: ${left.type} $operator ${right.type}")
             }
 
     private fun evalInfixBooleanExpression(operator: String, left: MonkeyBoolean, right: MonkeyBoolean) =
             when (operator) {
                 "==" -> nativeBoolToBooleanObject(left === right)
                 "!=" -> nativeBoolToBooleanObject(left !== right)
-                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+                else -> MonkeyError("unknown operator: ${left.type} $operator ${right.type}")
             }
 
     private fun evalInfixIntegerExpression(operator: String, left: MonkeyInteger, right: MonkeyInteger) =
@@ -170,17 +169,17 @@ object Evaluator {
                 "<" -> nativeBoolToBooleanObject(left.value < right.value)
                 "==" -> nativeBoolToBooleanObject(left.value == right.value)
                 "!=" -> nativeBoolToBooleanObject(left.value != right.value)
-                else -> Error("unknown operator: ${left.type} $operator ${right.type}")
+                else -> MonkeyError("unknown operator: ${left.type} $operator ${right.type}")
             }
 
     private fun evalPrefixExpression(operator: String, right: MonkeyObject) = when (operator) {
         "!" -> evalBangOperatorExpression(right)
         "-" -> evalMinusPrefixOperatorExpression(right)
-        else -> Error("unknown operator: $operator${right.type}")
+        else -> MonkeyError("unknown operator: $operator${right.type}")
     }
 
     private fun evalMinusPrefixOperatorExpression(right: MonkeyObject) = if (right !is MonkeyInteger)
-        Error("unknown operator: -${right.type}")
+        MonkeyError("unknown operator: -${right.type}")
     else MonkeyInteger(-right.value)
 
     private fun evalBangOperatorExpression(right: MonkeyObject) = when (right) {
@@ -191,18 +190,18 @@ object Evaluator {
     }
 
     private fun applyFunction(function: MonkeyObject, args: List<MonkeyObject>) = when (function::class) {
-        Function::class -> {
-            val env = extendFunctionEnv(function as Function, args)
+        MonkeyFunction::class -> {
+            val env = extendFunctionEnv(function as MonkeyFunction, args)
             val evaluated = eval(function.body, env)
             unwrapReturnValue(evaluated)
         }
-        Builtin::class -> (function as Builtin).function(args)
-        else -> Error("not a function: $function")
+        MonkeyBuiltin::class -> (function as MonkeyBuiltin).function(args)
+        else -> MonkeyError("not a function: $function")
     }
 
     private fun unwrapReturnValue(evaluated: MonkeyObject) = (evaluated as? ReturnValue)?.value ?: evaluated
 
-    private fun extendFunctionEnv(function: Function, arguments: List<MonkeyObject>): Environment {
+    private fun extendFunctionEnv(function: MonkeyFunction, arguments: List<MonkeyObject>): Environment {
         val env = function.env.newEnclosedEnvironment()
         function.parameters.forEachIndexed { index, param -> env.set(param.value, arguments[index]) }
         return env

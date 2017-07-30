@@ -177,6 +177,6 @@ fun testNullObject(obj: MonkeyObject) {
 }
 
 fun testError(obj: MonkeyObject, expected: String) {
-    obj.should.be.instanceof(monkey.`object`.Error::class.java)
-    (obj as monkey.`object`.Error).message.should.be.equal(expected)
+    obj.should.be.instanceof(monkey.`object`.MonkeyError::class.java)
+    (obj as monkey.`object`.MonkeyError).message.should.be.equal(expected)
 }
