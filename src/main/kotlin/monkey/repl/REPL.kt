@@ -7,7 +7,6 @@ import monkey.ast.Parser
 import monkey.evaluator.Evaluator
 import monkey.lexer.StringLexer
 
-
 /**
  * @author andrea
  * @since 7/17/17
@@ -33,9 +32,11 @@ object REPL {
         while (true) {
             print(PROMPT)
             try {
-                val parser = Parser(StringLexer(readLine()!!))
-                val program = parser.parseProgram()
-                println(Evaluator.eval(program, environment).inspect())
+                val line = readLine()
+                if (line?.isNotEmpty() == true) {
+                    val program = Parser(StringLexer(line)).parseProgram()
+                    println(Evaluator.eval(program, environment).inspect())
+                }
             } catch (error: Exception) {
                 println(MONKEY_FACE)
                 println(error.message?.red())
