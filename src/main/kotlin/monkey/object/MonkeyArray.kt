@@ -6,5 +6,5 @@ package monkey.`object`
  */
 data class MonkeyArray(val elements: List<MonkeyObject>) : MonkeyObject(ObjectType.ARRAY) {
 
-    override fun inspect() = "[${elements.map { it.inspect() }.joinToString(", ")}]"
+    override fun inspect() = "[${elements.joinToString(", ") { it.inspect() }}]"
 }

@@ -47,13 +47,13 @@ class StringLexer(private val input: String) : Lexer {
             ':' -> Token(TokenType.COLON, this.char.toString())
             0.toChar() -> Token(TokenType.EOF, this.char.toString())
             else -> {
-                return if (isIdentifier(char)) {
-                    val identifier = read { isIdentifier(char) }
-                    Token(getTokenType(identifier), identifier)
-                } else if (char.isDigit()) {
-                    Token(TokenType.INT, read { it.isDigit() })
-                } else {
-                    Token(TokenType.ILLEGAL, this.char.toString())
+                return when {
+                    isIdentifier(char) -> {
+                        val identifier = read { isIdentifier(char) }
+                        Token(getTokenType(identifier), identifier)
+                    }
+                    char.isDigit() -> Token(TokenType.INT, read { it.isDigit() })
+                    else -> Token(TokenType.ILLEGAL, this.char.toString())
                 }
             }
         }

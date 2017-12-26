@@ -12,5 +12,5 @@ data class MonkeyFunction(
         val body: BlockStatement,
         val env: Environment) : MonkeyObject(ObjectType.FUNCTION) {
 
-    override fun inspect() = "fn (${parameters.map { it.value }.joinToString(", ")}) {\n\t$body\n}"
+    override fun inspect() = "fn (${parameters.joinToString(", ") { it.value }}) {\n\t$body\n}"
 }

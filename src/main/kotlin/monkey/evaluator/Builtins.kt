@@ -1,6 +1,13 @@
 package monkey.evaluator
 
-import monkey.`object`.*
+import monkey.`object`.MonkeyArray
+import monkey.`object`.MonkeyBuiltin
+import monkey.`object`.MonkeyError
+import monkey.`object`.MonkeyInteger
+import monkey.`object`.MonkeyNull
+import monkey.`object`.MonkeyObject
+import monkey.`object`.MonkeyString
+import monkey.`object`.ObjectType
 
 /**
  * @author andrea
@@ -11,10 +18,10 @@ val len = fun(args: List<MonkeyObject>): MonkeyObject {
         return MonkeyError("wrong number of arguments. got=${args.size}, want=1")
 
     val argument = args[0]
-    when (argument.type) {
-        ObjectType.STRING -> return MonkeyInteger((argument as MonkeyString).value.length)
-        ObjectType.ARRAY -> return MonkeyInteger((argument as MonkeyArray).elements.size)
-        else -> return MonkeyError("argument to `len` not supported, got ${argument.type}")
+    return when (argument.type) {
+        ObjectType.STRING -> MonkeyInteger((argument as MonkeyString).value.length)
+        ObjectType.ARRAY -> MonkeyInteger((argument as MonkeyArray).elements.size)
+        else -> MonkeyError("argument to `len` not supported, got ${argument.type}")
     }
 }
 

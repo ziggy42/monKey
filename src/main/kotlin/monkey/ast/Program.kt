@@ -11,5 +11,5 @@ data class Program(val statements: List<Statement>) : Node {
 
     override fun getTokenLiteral() = if (statements.isNotEmpty()) statements[0].getTokenLiteral() else ""
 
-    override fun toString() = statements.map { it.toString() }.joinToString("\n")
+    override fun toString() = statements.joinToString("\n") { it.toString() }
 }

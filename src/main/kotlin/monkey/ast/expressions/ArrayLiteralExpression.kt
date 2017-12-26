@@ -10,5 +10,5 @@ class ArrayLiteralExpression(private val token: Token, val elements: List<Expres
 
     override fun getTokenLiteral() = token.literal
 
-    override fun toString() = "[${elements.map { it.toString() }.joinToString(", ")}]"
+    override fun toString() = "[${elements.joinToString(", ") { it.toString() }}]"
 }

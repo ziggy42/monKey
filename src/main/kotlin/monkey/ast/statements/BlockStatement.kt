@@ -10,5 +10,5 @@ class BlockStatement(private val token: Token, val statements: List<Statement>) 
 
     override fun getTokenLiteral() = token.literal
 
-    override fun toString() = statements.map { it.toString() }.joinToString("\n")
+    override fun toString() = statements.joinToString("\n") { it.toString() }
 }
