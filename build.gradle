@@ -20,6 +20,17 @@ apply plugin: 'kotlin'
 
 mainClassName = "monkey.MainKt"
 
+jar {
+    from {
+        (configurations.runtime).collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes 'Main-Class': 'monkey.MainKt'
+    }
+}
+
 run {
     standardInput = System.in
 }
